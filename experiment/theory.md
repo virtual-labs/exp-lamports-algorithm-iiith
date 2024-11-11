@@ -19,15 +19,15 @@ L1: Si has received a message with timestamp larger than (tsi, i) from all
 other sites.
 L2: Si’s request is at the top of request_queuei.
 
-## Releasing the critical section \
+## Releasing the critical section  <br />
 1. Site Si, upon exiting the CS, removes its request from the top of its request
-queue and broadcasts a timestamped RELEASE message to all other sites. \
+queue and broadcasts a timestamped RELEASE message to all other sites.  <br />
 2. When a site Sj receives a RELEASE message from site Si, it removes Si’s
-request from its request queue. \
+request from its request queue.  <br />
 
 We now argue for correctness (exercise 1), fairness (exercise 2) and complexity. Note that all requests, REQUEST(tsi, i), are strictly totally ordered. This is used to break ties for clock times. 
 
-### **Correctness** : That one and only one site can access CS at a given time. \
+### **Correctness** : That one and only one site can access CS at a given time.  <br />
 *Inline Exercise 1*: Show that assumption of two sites executing CS concurrently leads to contradiction. More specifically, use FIFO property of channels and strict total order among all requests to argue that assumption along with L1 & L2 implies that there is a site executing CS in presence of a smaller timestamp request in its queue (a contradiction!). 
 
 ### **Fairness** : That requests are served in order of their time-stamps. 
