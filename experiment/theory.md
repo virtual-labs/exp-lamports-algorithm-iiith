@@ -9,23 +9,27 @@ Lamport’s distributed mutual exclusion is a distributed algorithm i.e. all par
 
 Every site keeps a track of its local clock, and a time-stamp ordered queue Request_queue to store all CS request it has receives. Channel is FIFO. 
 
-## Requesting the critical section
-site Si wanting to enter the CS broadcasts a REQUEST(tsi, i) message to all other sites and places the request on request_queuei.
-When a site Sj receives the REQUEST(tsi, i) message from site Si, it places site Si’s request on its request_queuej and returns a timestamped REPLY message to Si.
+## Algorithm 
 
-## Executing the critical section
-Site Si enters the CS when the following two conditions hold:
-L1: Si has received a message with timestamp larger than (tsi, i) from all
+### Requesting the critical section
+site S<sub>i</sub> wanting to enter the CS broadcasts a REQUEST(ts<sub>i</sub>, i) message to all other sites and places the request on request_queue<sub>i</sub>.
+When a site S<sub>j</sub> receives the REQUEST(ts<sub>i</sub>, i) message from site S<sub>i</sub>, it places site S<sub>i</sub>’s request on its request_queue<sub>j</sub> and returns a timestamped REPLY message to S<sub>i</sub>.
+
+### Executing the critical section
+Site S<sub>i</sub> enters the CS when the following two conditions hold:
+L1: S<sub>i</sub> has received a message with timestamp larger than (ts<sub>i</sub>, i) from all
 other sites.
-L2: Si’s request is at the top of request_queuei.
+L2: S<sub>i</sub>’s request is at the top of request_queue<sub>i</sub>.
 
-## Releasing the critical section  <br />
-1. Site Si, upon exiting the CS, removes its request from the top of its request
+### Releasing the critical section  <br />
+1. Site S<sub>i</sub>, upon exiting the CS, removes its request from the top of its request
 queue and broadcasts a timestamped RELEASE message to all other sites.  <br />
-2. When a site Sj receives a RELEASE message from site Si, it removes Si’s
+2. When a site S<sub>j</sub> receives a RELEASE message from site S<sub>i</sub>, it removes S<sub>i</sub>’s
 request from its request queue.  <br />
 
-We now argue for correctness (exercise 1), fairness (exercise 2) and complexity. Note that all requests, REQUEST(tsi, i), are strictly totally ordered. This is used to break ties for clock times. 
+## Analysis
+
+We now argue for correctness (exercise 1), fairness (exercise 2) and complexity. Note that all requests, REQUEST(ts<sub>i</sub>, i), are strictly totally ordered. This is used to break ties for clock times. 
 
 ### **Correctness** : That one and only one site can access CS at a given time.  <br />
 *Inline Exercise 1*: Show that assumption of two sites executing CS concurrently leads to contradiction. More specifically, use FIFO property of channels and strict total order among all requests to argue that assumption along with L1 & L2 implies that there is a site executing CS in presence of a smaller timestamp request in its queue (a contradiction!). 
