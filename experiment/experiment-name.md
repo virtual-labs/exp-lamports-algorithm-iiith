@@ -1,1 +1,1 @@
-## Experiment name
+## Lamport’s algorithm
