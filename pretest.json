@@ -1,0 +1,107 @@
+{
+  "version": 2.0,
+  "questions": [
+    {
+      "question": "What is the main purpose of Lamport's algorithm in distributed systems?",
+      "answers": {
+        "a": "To provide fault tolerance during process crashes",
+        "b": "To ensure only one process can access the critical section at a time",
+        "c": "To synchronize clocks across all processes in the system",
+        "d": "To maximize throughput in distributed systems"
+      },
+      "explanations": {
+        "a": "Incorrect. Lamport's algorithm focuses on mutual exclusion, not fault tolerance.",
+        "b": "Correct. The algorithm ensures that only one process can access the critical section at any given time.",
+        "c": "Incorrect. While Lamport's algorithm uses logical timestamps, it does not synchronize clocks.",
+        "d": "Incorrect. Lamport's algorithm prioritizes mutual exclusion, not throughput maximization."
+      },
+      "correctAnswer": "b",
+      "difficulty": "beginner"
+    },
+    {
+      "question": "How does Lamport's algorithm resolve conflicts when two processes request the critical section simultaneously?",
+      "answers": {
+        "a": "By using a round-robin approach to give each process equal time",
+        "b": "By comparing the timestamps of the requests and allowing the process with the smaller timestamp to enter",
+        "c": "By randomly choosing which process gets to enter",
+        "d": "By blocking all requests until the first process finishes executing"
+      },
+      "explanations": {
+        "a": "Incorrect. Lamport’s algorithm does not use a round-robin approach.",
+        "b": "Correct. The algorithm uses the smallest timestamp to decide which process has priority to enter the critical section.",
+        "c": "Incorrect. The algorithm does not use randomness to resolve conflicts.",
+        "d": "Incorrect. The algorithm does not block all requests; instead, it resolves the conflict based on timestamp comparison."
+      },
+      "correctAnswer": "b",
+      "difficulty": "intermediate"
+    },
+    {
+      "question": "What type of clock does Lamport's algorithm use to order events in a distributed system?",
+      "answers": {
+        "a": "Real-time clock",
+        "b": "Physical clock",
+        "c": "Logical clock",
+        "d": "Global clock"
+      },
+      "explanations": {
+        "a": "Incorrect. Lamport’s algorithm uses logical clocks, not real-time clocks.",
+        "b": "Incorrect. The algorithm does not use physical clocks, as they may be unsynchronized in distributed systems.",
+        "c": "Correct. Lamport’s algorithm uses logical clocks to maintain a partial ordering of events.",
+        "d": "Incorrect. Lamport’s algorithm does not require a global clock."
+      },
+      "correctAnswer": "c",
+      "difficulty": "beginner"
+    },
+    {
+      "question": "Which of the following is **not** a feature of Lamport's algorithm for mutual exclusion?",
+      "answers": {
+        "a": "It ensures that only one process accesses the critical section at any time",
+        "b": "It requires all processes to send messages to each other to request entry into the critical section",
+        "c": "It resolves conflicts based on process priorities set by physical clocks",
+        "d": "It guarantees that all processes eventually enter the critical section"
+      },
+      "explanations": {
+        "a": "Incorrect. This is the main goal of Lamport’s algorithm.",
+        "b": "Incorrect. Lamport’s algorithm relies on message passing to request entry to the critical section.",
+        "c": "Correct. Lamport's algorithm does not rely on physical clocks; it uses logical timestamps.",
+        "d": "Incorrect. Lamport’s algorithm ensures fairness by resolving conflicts based on timestamps."
+      },
+      "correctAnswer": "c",
+      "difficulty": "intermediate"
+    },
+    {
+      "question": "In Lamport's algorithm, what must a process do before entering the critical section?",
+      "answers": {
+        "a": "Wait for a timeout",
+        "b": "Send a request to all other processes and wait for a reply",
+        "c": "Increment its clock and enter immediately",
+        "d": "Wait for a process to release the critical section"
+      },
+      "explanations": {
+        "a": "Incorrect. Lamport's algorithm does not rely on timeouts to enter the critical section.",
+        "b": "Correct. A process must send a request to all other processes and wait for replies before entering the critical section.",
+        "c": "Incorrect. A process must first send requests and receive replies before entering.",
+        "d": "Incorrect. The process must request entry and wait for replies, not wait for someone to release the critical section."
+      },
+      "correctAnswer": "b",
+      "difficulty": "beginner"
+    },
+    {
+      "question": "What happens when a process releases the critical section in Lamport's algorithm?",
+      "answers": {
+        "a": "It sends a message to all other processes indicating that the critical section is now available",
+        "b": "It sends a message only to the process that requested last",
+        "c": "It automatically enters the critical section again",
+        "d": "It waits for the next process to request the critical section"
+      },
+      "explanations": {
+        "a": "Correct. Once a process completes its work in the critical section, it sends a release message to all other processes.",
+        "b": "Incorrect. The process must notify all other processes, not just the one that requested last.",
+        "c": "Incorrect. The process does not automatically re-enter the critical section after releasing it.",
+        "d": "Incorrect. The process notifies all others that it has released the critical section, allowing them to request access."
+      },
+      "correctAnswer": "a",
+      "difficulty": "beginner"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lamport’s Algorithm Simulation</title>
+  <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- Log Panel -->
+    <div id="log-panel"></div>
+
+    <!-- Canvas Panel -->
+    <div id="canvas-panel">
+      <canvas id="sim-canvas"></canvas>
+      <ul id="context-menu" class="context-menu">
+        <li data-action="request">Request CS</li>
+        <!-- <li data-action="reply">Force Reply</li> -->
+        <li data-action="release">Release CS</li>
+      </ul>
+    </div>
+
+    <!-- Right Panel: Controls & State -->
+    <div id="right-panel">
+      <!-- Control Panel -->
+      <div id="control-panel">
+        <button id="play-pause-btn">Play</button>
+        <button id="step-btn">Step</button>
+        <button id="reset-btn">Reset</button>
+        <label for ="random-delays-chk">
+          <input type="checkbox" id="random-delays-chk">
+          Enable Random Delays
+        </label>
+        <label for="test-mode-toggle">
+          <input type="checkbox" id="test-mode-toggle">
+          Enable Test Mode
+        </label>
+        <select id="process-select">
+          <option value="" disabled selected>Select Process</option>
+          <option value="P1">P1</option>
+          <option value="P2">P2</option>
+          <option value="P3">P3</option>
+          <option value="P4">P4</option>
+        </select>
+        <button id="request-cs-btn">Request CS</button>
+      </div>
+
+      <!-- State Panel -->
+      <div id="state-panel"></div>
+    </div>
+
+  </div>
+
+  <!-- Load simulation script -->
+  <script src="./js/main.js"></script>
+<script src="../assets/js/iframeResize.js"></script>
+        
+        </body>
+</html>

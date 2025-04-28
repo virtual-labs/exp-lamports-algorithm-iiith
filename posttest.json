@@ -1,0 +1,141 @@
+{
+  "version": 2.0,
+  "questions": [
+    {
+      "question": "In Lamport's mutual exclusion algorithm, what is used to order requests for the Critical Section?",
+      "answers": {
+        "a": "Physical clock timestamps",
+        "b": "Logical clock timestamps",
+        "c": "Process IDs only",
+        "d": "Random priorities"
+      },
+      "explanations": {
+        "a": "Incorrect. Physical clocks can vary between machines and are not reliable.",
+        "b": "Correct. Lamport's algorithm uses logical clock timestamps.",
+        "c": "Incorrect. Process IDs are only used to break ties.",
+        "d": "Incorrect. There are no random priorities in Lamport's algorithm."
+      },
+      "correctAnswer": "b",
+      "difficulty": "intermediate"
+    },
+    {
+      "question": "What must a process wait for before entering the Critical Section in Lamport’s algorithm?",
+      "answers": {
+        "a": "Replies from all other processes",
+        "b": "A token from a coordinator",
+        "c": "Majority of acknowledgements",
+        "d": "No waiting is required"
+      },
+      "explanations": {
+        "a": "Correct. A process must receive a REPLY from every other process.",
+        "b": "Incorrect. Lamport's algorithm does not use tokens.",
+        "c": "Incorrect. Majority is not enough; replies are needed from all.",
+        "d": "Incorrect. Waiting is essential to ensure mutual exclusion."
+      },
+      "correctAnswer": "a",
+      "difficulty": "beginner"
+    },
+    {
+      "question": "If a link becomes slow between two processes, what is the effect on mutual exclusion?",
+      "answers": {
+        "a": "The system may fail",
+        "b": "Multiple processes can enter CS simultaneously",
+        "c": "It delays message delivery but mutual exclusion is preserved",
+        "d": "Processes will ignore slow links"
+      },
+      "explanations": {
+        "a": "Incorrect. Slow links do not cause system failure.",
+        "b": "Incorrect. Mutual exclusion is still guaranteed.",
+        "c": "Correct. Delays may occur but correctness is maintained.",
+        "d": "Incorrect. Processes cannot ignore message delays."
+      },
+      "correctAnswer": "c",
+      "difficulty": "intermediate"
+    },
+    {
+      "question": "What happens to a process’s Request Queue after it sends a RELEASE message?",
+      "answers": {
+        "a": "It adds new entries",
+        "b": "It clears the served request",
+        "c": "It increases the clock value",
+        "d": "It sends more REQUESTs"
+      },
+      "explanations": {
+        "a": "Incorrect. No new entries are added automatically.",
+        "b": "Correct. After releasing CS, the served request is removed from the queue.",
+        "c": "Incorrect. Clock updates happen when sending messages but that’s not the primary effect here.",
+        "d": "Incorrect. It does not initiate more requests by itself."
+      },
+      "correctAnswer": "b",
+      "difficulty": "beginner"
+    },
+    {
+      "question": "In Test Mode 1, how many processes can request the Critical Section simultaneously?",
+      "answers": {
+        "a": "1",
+        "b": "2",
+        "c": "3",
+        "d": "4"
+      },
+      "explanations": {
+        "a": "Correct. Only one process can request CS at a time in Test Mode 1.",
+        "b": "Incorrect. That happens in Test Mode 2.",
+        "c": "Incorrect. That happens in Test Mode 3.",
+        "d": "Incorrect. That happens in Test Mode 4."
+      },
+      "correctAnswer": "a",
+      "difficulty": "beginner"
+    },
+    {
+      "question": "What is the main role of the logical clock in Lamport's mutual exclusion algorithm?",
+      "answers": {
+        "a": "It measures real-world time",
+        "b": "It provides unique IDs to processes",
+        "c": "It orders events consistently across processes",
+        "d": "It speeds up message transmission"
+      },
+      "explanations": {
+        "a": "Incorrect. Logical clocks are not tied to real-world time.",
+        "b": "Incorrect. Process IDs are separate.",
+        "c": "Correct. Logical clocks ensure a consistent ordering of events.",
+        "d": "Incorrect. Clock value does not affect transmission speed."
+      },
+      "correctAnswer": "c",
+      "difficulty": "intermediate"
+    },
+    {
+      "question": "If a process receives a REQUEST from another process with a lower timestamp, what should it do?",
+      "answers": {
+        "a": "Immediately grant REPLY",
+        "b": "Queue the request and wait",
+        "c": "Enter Critical Section itself",
+        "d": "Ignore the REQUEST"
+      },
+      "explanations": {
+        "a": "Correct. It should immediately send a REPLY if not competing.",
+        "b": "Incorrect. It should not delay if the other process has a lower timestamp.",
+        "c": "Incorrect. Entering CS itself would violate mutual exclusion.",
+        "d": "Incorrect. Ignoring REQUEST violates protocol."
+      },
+      "correctAnswer": "a",
+      "difficulty": "intermediate"
+    },
+    {
+      "question": "Why is it important to clear the Reply Queue after a process enters the Critical Section and releases it?",
+      "answers": {
+        "a": "To reduce memory usage",
+        "b": "To allow fresh REPLY collection for the next CS request",
+        "c": "To avoid deadlock detection errors",
+        "d": "To prevent logical clock reset"
+      },
+      "explanations": {
+        "a": "Incorrect. While memory matters, correctness is the main reason.",
+        "b": "Correct. Each new CS request must independently collect fresh replies.",
+        "c": "Incorrect. Deadlock detection is not directly related here.",
+        "d": "Incorrect. Logical clocks are unaffected by Reply Queue clearing."
+      },
+      "correctAnswer": "b",
+      "difficulty": "intermediate"
+    }
+  ]
+}
