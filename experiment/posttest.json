@@ -118,7 +118,7 @@
         "d": "Incorrect. Ignoring REQUEST violates protocol."
       },
       "correctAnswer": "a",
-      "difficulty": "intermediate"
+      "difficulty": "advanced"
     },
     {
       "question": "Why is it important to clear the Reply Queue after a process enters the Critical Section and releases it?",
@@ -135,7 +135,24 @@
         "d": "Incorrect. Logical clocks are unaffected by Reply Queue clearing."
       },
       "correctAnswer": "b",
-      "difficulty": "intermediate"
+      "difficulty": "advanced"
+    },
+    {
+      "question": "What happens if a process crashes while holding the critical section in Lamport's algorithm?",
+      "answers": {
+        "a": "The system automatically recovers and continues normal operation",
+        "b": "Other processes will be permanently blocked from entering the critical section",
+        "c": "The algorithm includes timeout mechanisms to handle this scenario",
+        "d": "The crashed process automatically sends a release message"
+      },
+      "explanations": {
+        "a": "Incorrect. The basic Lamport algorithm does not handle crash failures automatically.",
+        "b": "Correct. Without additional mechanisms, other processes would be permanently blocked.",
+        "c": "Incorrect. The basic algorithm does not include timeout mechanisms.",
+        "d": "Incorrect. A crashed process cannot send any messages."
+      },
+      "correctAnswer": "b",
+      "difficulty": "advanced"
     }
   ]
 }

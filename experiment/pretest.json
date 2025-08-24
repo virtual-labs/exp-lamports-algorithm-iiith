@@ -101,7 +101,58 @@
         "d": "Incorrect. The process notifies all others that it has released the critical section, allowing them to request access."
       },
       "correctAnswer": "a",
-      "difficulty": "beginner"
+      "difficulty": "intermediate"
+    },
+    {
+      "question": "What happens when two processes send requests with identical logical timestamps in Lamport's algorithm?",
+      "answers": {
+        "a": "The system crashes due to timestamp conflict",
+        "b": "Both processes are allowed to enter the critical section simultaneously",
+        "c": "The tie is broken using process IDs, with the lower ID getting priority",
+        "d": "The requests are queued randomly"
+      },
+      "explanations": {
+        "a": "Incorrect. The system has mechanisms to handle timestamp conflicts.",
+        "b": "Incorrect. This would violate mutual exclusion.",
+        "c": "Correct. When timestamps are identical, process IDs are used as tie-breakers.",
+        "d": "Incorrect. The tie-breaking is deterministic, not random."
+      },
+      "correctAnswer": "c",
+      "difficulty": "advanced"
+    },
+    {
+      "question": "In Lamport's algorithm, what is the significance of maintaining a request queue at each process?",
+      "answers": {
+        "a": "To store messages temporarily when the network is slow",
+        "b": "To ensure requests are processed in timestamp order for correctness",
+        "c": "To reduce memory usage by batching requests",
+        "d": "To implement load balancing across processes"
+      },
+      "explanations": {
+        "a": "Incorrect. The queue is for ordering, not temporary storage due to network delays.",
+        "b": "Correct. The request queue ensures that requests are processed in the correct timestamp order.",
+        "c": "Incorrect. The queue is for correctness, not memory optimization.",
+        "d": "Incorrect. Load balancing is not the purpose of the request queue."
+      },
+      "correctAnswer": "b",
+      "difficulty": "advanced"
+    },
+    {
+      "question": "Why must a process wait for replies from ALL other processes before entering the critical section in Lamport's algorithm?",
+      "answers": {
+        "a": "To ensure network reliability",
+        "b": "To prevent deadlock scenarios",
+        "c": "To guarantee that no other process has an earlier timestamp request",
+        "d": "To maintain load balance across the system"
+      },
+      "explanations": {
+        "a": "Incorrect. Waiting for all replies is not primarily about network reliability.",
+        "b": "Incorrect. Deadlock prevention is not the main reason.",
+        "c": "Correct. Waiting for all replies ensures no other process has a conflicting earlier request.",
+        "d": "Incorrect. Load balancing is not the purpose of waiting for all replies."
+      },
+      "correctAnswer": "c",
+      "difficulty": "advanced"
     }
   ]
 }

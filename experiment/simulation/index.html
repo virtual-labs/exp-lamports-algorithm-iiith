@@ -113,20 +113,27 @@
 
         .controls-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr;
             gap: 10px;
             margin-bottom: 15px;
         }
 
-        .controls-grid .reset-button {
-            grid-column: 1 / -1;
-            margin-top: 5px;
-        }
+    /* Ensure all control buttons (Play/Step/Reset) are identical in size */
+    :root { --control-btn-height: 56px; }
 
-        .controls-grid .neu-button:not(.reset-button) {
-            min-width: 0;
-            flex: 1;
-        }
+    .controls-grid .neu-button {
+      width: 100%;
+      height: var(--control-btn-height);
+    }
+
+    /* Do not let Reset span full width; keep same footprint as others */
+    .controls-grid .reset-button { 
+      grid-column: auto; 
+      margin-top: 0; 
+    }
+
+    /* Legacy rule not needed for grid layout; ensure equal sizing */
+    .controls-grid .neu-button:not(.reset-button) { min-width: 0; }
 
         .neu-button {
             color: #fff;
@@ -372,8 +379,8 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .context-menu {
-            position: absolute;
+    .context-menu {
+      position: fixed;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 12px;
@@ -382,6 +389,7 @@
             display: none;
             z-index: 1000;
             border: 1px solid #e2e8f0;
+      /* Positioned via JS using clientX/clientY */
         }
 
         .context-menu button {
@@ -992,10 +1000,15 @@
               ctx.arc(x, y, 20, 0, Math.PI * 2);
               ctx.fill();
               ctx.save();
-              ctx.fillStyle = '#fff';
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
-              ctx.font = '13px Arial';
+              ctx.font = 'bold 12px Inter, Arial, sans-serif';
+              // Outline for contrast on any background
+              ctx.lineWidth = 3;
+              ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+              ctx.strokeText(m.type, x, y);
+              // Fill text
+              ctx.fillStyle = '#ffffff';
               ctx.fillText(m.type, x, y);
               ctx.restore();
             }
@@ -1044,11 +1057,18 @@
               if (Math.hypot(dx, dy) < NODE_RADIUS) {
                 // show context menu
                 contextTarget = id;
-                const panelRect = canvas.getBoundingClientRect();
-                const relX = e.clientX - panelRect.left;
-                const relY = e.clientY - panelRect.top;
-                contextMenu.style.left = relX + 'px';
-                contextMenu.style.top  = relY + 'px';
+                // Place menu near the click using viewport coordinates
+                const offset = 8; // small nudge so it doesn't sit under the cursor
+                let left = e.clientX + offset;
+                let top  = e.clientY + offset;
+                // Keep within viewport
+                const menuRect = contextMenu.getBoundingClientRect();
+                const vw = window.innerWidth;
+                const vh = window.innerHeight;
+                if (left + menuRect.width > vw) left = Math.max(0, vw - menuRect.width - 6);
+                if (top + menuRect.height > vh) top = Math.max(0, vh - menuRect.height - 6);
+                contextMenu.style.left = left + 'px';
+                contextMenu.style.top  = top + 'px';
                 contextMenu.style.display = 'block';
                 return;
               }
