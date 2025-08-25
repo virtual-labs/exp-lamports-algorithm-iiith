@@ -1,5 +1,3 @@
-### Procedure
-
 This experiment demonstrates **Lamport’s Algorithm for Mutual Exclusion** in a distributed system using an interactive simulation. Follow the steps below to perform the experiment:
 
 ---
