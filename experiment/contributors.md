@@ -14,4 +14,4 @@
 | :---: | :---: | :---: | :---: | :---: |
 | 1 | Subhajit Sahu | subhajit.sahu@research.iiit.ac.in | IIIT Hyderabad | wolfram77 |
 | 2 | Ajitanshu Singh | ajitanshu.singh@research.iiit.ac.in | IIIT Hyderabad | ajitanshu19 |
-| 3 | Sai Teja | sai.teja@research.iiit.ac.in | IIIT Hyderabad | saitejaMaryala |
+| 3 | Sai Teja | saiteja.maryala@research.iiit.ac.in | IIIT Hyderabad | saitejaMaryala |

@@ -1,4 +1,4 @@
-## 1. Introduction
+### 1. Introduction
 
 In distributed systems, processes often need exclusive access to shared resources, such as files, databases, or hardware. Ensuring that **no two processes access a critical section (CS) simultaneously** is crucial to maintain **data consistency** and **system correctness**. Unlike centralized systems, **distributed systems** lack a global clock and shared memory, making coordination significantly harder.
 
@@ -7,7 +7,7 @@ One of the pioneering solutions to this problem is **Lamport’s Algorithm**, in
 
 ---
 
-## 2. Problem Statement
+### 2. Problem Statement
 
 The challenge in distributed systems is to enforce mutual exclusion while handling:
 - **No global clock:** No single source of time synchronization.
@@ -22,7 +22,7 @@ Thus, the mutual exclusion protocol must ensure:
 
 ---
 
-## 3. Lamport’s Logical Clocks: Foundation
+### 3. Lamport’s Logical Clocks: Foundation
 
 Before understanding the mutual exclusion algorithm, we must understand **Lamport’s Logical Clocks**.
 
@@ -37,9 +37,9 @@ This way, **the "happened-before" relationship (`→`)** among events can be par
 
 ---
 
-## 4. Lamport’s Mutual Exclusion Algorithm
+### 4. Lamport’s Mutual Exclusion Algorithm
 
-### **Steps for a Process `P` to Enter and Exit the Critical Section:**
+#### **Steps for a Process `P` to Enter and Exit the Critical Section:**
 
 1. **Request Phase:**
    - Increment the local clock.
@@ -66,7 +66,7 @@ This way, **the "happened-before" relationship (`→`)** among events can be par
 
 ---
 
-## 5. Example Scenario
+### 5. Example Scenario
 
 ![](images/example-01.png)
 
@@ -91,7 +91,7 @@ A more complex example is given below, where multiple processes are requesting a
 
 ---
 
-## 6. How Mutual Exclusion is Achieved
+### 6. How Mutual Exclusion is Achieved
 
 - **Ordering via Timestamps:**
   Requests are ordered based on their logical timestamps (smaller timestamp = higher priority).
@@ -107,7 +107,7 @@ A more complex example is given below, where multiple processes are requesting a
 
 ---
 
-## 7. Practical Aspects & Challenges
+### 7. Practical Aspects & Challenges
 
 | Aspect | Practical Insight |
 |:---|:---|
@@ -120,7 +120,7 @@ A more complex example is given below, where multiple processes are requesting a
 
 ---
 
-## 8. Comparison with Other Distributed Mutual Exclusion Algorithms
+### 8. Comparison with Other Distributed Mutual Exclusion Algorithms
 
 - **Ricart-Agrawala Algorithm:**
   Improves upon Lamport by reducing messages to N-1 (only requests and replies, no releases).
@@ -135,7 +135,7 @@ Lamport's approach, despite being heavier in message complexity, is **simple, ge
 
 ---
 
-## 9. Real-World Applications
+### 9. Real-World Applications
 
 - **Distributed Databases:** Ensuring atomic transactions without double-writes.
 - **Cloud Systems:** Managing exclusive locks across microservices.
