@@ -671,7 +671,7 @@
             <div class="panel-header">
                 <div class="panel-title">Process Network Simulation</div>
                 <p style="color: #64748b; font-size: 0.8rem;">
-                    🖱️ Click nodes for context menu • ⌨️ Press 1-4 to request CS • Press R to release
+                    🖱️ Click nodes for context menu • ⌨️ Press 1-4 to request CS (enter time) • Press R to release
                 </p>
             </div>
             <canvas id="simulation-canvas"></canvas>
@@ -701,16 +701,16 @@
                 <h3>Algorithm Steps</h3>
                 <div class="algorithm-steps">
                     <div class="step" id="step-1">
-                        <strong>1. Request CS:</strong> Process increments its logical clock and broadcasts REQUEST to all processes
+                        <strong>1. Request CS:</strong> Process takes time input from user and broadcasts REQUEST with its process ID and time to all processes
                     </div>
                     <div class="step" id="step-2">
-                        <strong>2. Receive REQUEST:</strong> Process adds request to its queue and sends REPLY (or defers if it has priority)
+                        <strong>2. Receive REQUEST & Send REPLY:</strong> When a process receives a REQUEST, it adds it to its priority queue (sorted by time, then process ID) and sends a REPLY acknowledgment back
                     </div>
                     <div class="step" id="step-3">
-                        <strong>3. Enter CS:</strong> Process enters when it has REPLYs from all processes and its request is first in queue
+                        <strong>3. Enter CS:</strong> A process enters CS when it has received REPLY from ALL other processes AND it's at the top of its priority queue
                     </div>
                     <div class="step" id="step-4">
-                        <strong>4. Release CS:</strong> Process broadcasts RELEASE and sends deferred REPLYs
+                        <strong>4. Release CS:</strong> Process broadcasts RELEASE and removes itself from all priority queues. Next process in queue can enter CS
                     </div>
                 </div>
             </div>
@@ -781,11 +781,12 @@
 
           // Message class
           class Message {
-            constructor(type, from, to, timestamp, travelDuration) {
+            constructor(type, from, to, timestamp, processId, travelDuration) {
               this.type = type;
               this.from = from;
               this.to = to;
               this.timestamp = timestamp;
+              this.processId = processId; // Process ID of requester
               this.travelDuration = travelDuration;
               this.elapsed = 0;
             }
@@ -795,106 +796,211 @@
           class Process {
             constructor(id) {
               this.id = id;
-              this.clock = 0;
+              this.time = 0; // User-defined time
               this.state = 'idle';
               this.requestTimestamp = null;
-              this.repliesReceived = new Set();
-              this.deferredReplies = [];
-              this.requestQueue = [];
+              this.repliesReceived = new Set(); // Track which processes have sent REPLY messages
+              this.priorityQueue = []; // Priority queue based on time and process ID
             }
 
-            incrementClock(receivedTs = null) {
-              if (receivedTs !== null) {
-                this.clock = Math.max(this.clock, receivedTs) + 1;
-              } else {
-                this.clock += 1;
-              }
-              return this.clock;
-            }
-
-            broadcast(type) {
+            broadcast(type, timestamp = null, processId = null) {
+              const ts = timestamp !== null ? timestamp : this.time;
+              const pid = processId !== null ? processId : this.id;
               for (const otherId of procs) {
                 if (otherId === this.id) continue;
-                sendMessage(type, this.id, otherId, this.clock);
+                sendMessage(type, this.id, otherId, ts, pid);
               }
             }
 
             requestCS() {
-              if (this.state === 'inCS') { log(`${this.id} already in CS`, 'system'); return; }
-              this.incrementClock();
-              this.state = 'requesting';
-              this.requestTimestamp = this.clock;
+              if (this.state === 'inCS') { 
+                log(`${this.id} already in CS`, 'system'); 
+                return; 
+              }
+              if (this.state === 'requesting') {
+                log(`${this.id} is already requesting CS`, 'system');
+                return;
+              }
+              
+              // Prompt user for time
+              const timeInput = prompt(`Enter time for ${this.id} to request CS:`, this.time.toString());
+              if (timeInput === null) return; // User cancelled
+              
+              const newTime = parseFloat(timeInput);
+              if (isNaN(newTime) || newTime < 0) {
+                alert('Please enter a valid non-negative number');
+                return;
+              }
+              
+              this.time = newTime;
+              this.state = 'requesting'; // Always start as requesting (yellow)
+              this.requestTimestamp = this.time;
               this.repliesReceived.clear();
-              this.repliesReceived.add(this.id);
-              this.requestQueue.push({ id: this.id, ts: this.requestTimestamp });
+              
+              // Add own request to priority queue
+              this.priorityQueue.push({ id: this.id, time: this.time });
               this.sortQueue();
-              log(`[${this.id}] requests CS at ${this.requestTimestamp}`, 'request');
-              this.broadcast('REQUEST');
+              
+              log(`[${this.id}] requests CS with time=${this.time} and processId=${this.id}`, 'request');
+              
+              // Broadcast REQUEST to all other processes
+              // They will receive it via message delivery (asynchronous)
+              this.broadcast('REQUEST', this.time, this.id);
+              
+              // Add this request to all other processes' queues (for immediate visibility)
+              // but DON'T mark as received yet - that happens when message arrives
+              for (const otherId in sim.processes) {
+                if (otherId !== this.id) {
+                  const otherProc = sim.processes[otherId];
+                  
+                  // Add this process to other's queue (for priority calculation)
+                  otherProc.priorityQueue.push({ id: this.id, time: this.time });
+                  otherProc.sortQueue();
+                }
+              }
+              
+              log(`[${this.id}] in requesting state. Waiting for REPLY messages from other processes...`, 'system');
             }
 
             onReceive(msg) {
-              this.incrementClock(msg.timestamp);
               if (msg.type === 'REQUEST') {
-                this.requestQueue.push({ id: msg.from, ts: msg.timestamp });
-                this.sortQueue();
-                const myReq = this.requestTimestamp;
-                const defer = this.state === 'inCS' ||
-                              (this.state === 'requesting' &&
-                               ((myReq < msg.timestamp) ||
-                                (myReq === msg.timestamp && this.id < msg.from)));
-                if (defer) {
-                  this.deferredReplies.push(msg.from);
-                  log(`[${this.id}] defers REPLY to ${msg.from}`, 'reply');
-                } else {
-                  this.sendReply(msg.from);
-                }
+                log(`[${this.id}] received REQUEST message from ${msg.from} (processId=${msg.processId}, time=${msg.timestamp})`, 'request');
+                
+                // Send REPLY back to the requester
+                sendMessage('REPLY', this.id, msg.from, msg.timestamp, msg.processId);
+                log(`[${this.id}] sends REPLY to ${msg.from}`, 'reply');
               } else if (msg.type === 'REPLY') {
+                // Mark that we received a REPLY from this process
                 this.repliesReceived.add(msg.from);
-                log(`[${this.id}] received REPLY from ${msg.from}`, 'reply');
-              } else if (msg.type === 'RELEASE') {
-                this.requestQueue = this.requestQueue.filter(r => r.id !== msg.from);
-                log(`[${this.id}] processed RELEASE from ${msg.from}`, 'release');
+                
+                log(`[${this.id}] received REPLY message from ${msg.from}`, 'reply');
+                log(`[${this.id}] Replies received from: ${[...this.repliesReceived].join(', ')}`, 'system');
+                
+                // Check if we can now enter CS
+                this.checkEnterCS();
               }
-              this.checkEnterCS();
-            }
-
-            sendReply(toId) {
-              sendMessage('REPLY', this.id, toId, this.clock);
-              log(`[${this.id}] sends REPLY to ${toId}`, 'reply');
             }
 
             checkEnterCS() {
-              if (this.state === 'requesting' &&
-                  this.repliesReceived.size === procs.length &&
-                  this.requestQueue.length &&
-                  this.requestQueue[0].id === this.id) {
+              // Can enter CS if:
+              // 1. CS is not occupied
+              // 2. This process is requesting
+              // 3. This process has the lowest (time, processId) among ALL requesting processes
+              // 4. Has received REPLY from all OTHER processes (not including itself)
+              if (sim.csOccupied) {
+                return; // CS already occupied, cannot enter
+              }
+              
+              if (this.state !== 'requesting') {
+                return;
+              }
+              
+              // Count total number of OTHER processes (excluding self)
+              const totalOtherProcesses = Object.keys(sim.processes).length - 1;
+              
+              // Check if we have received replies from ALL other processes
+              if (this.repliesReceived.size < totalOtherProcesses) {
+                const allProcessIds = Object.keys(sim.processes).filter(pid => pid !== this.id);
+                const missing = allProcessIds.filter(pid => !this.repliesReceived.has(pid));
+                log(`[${this.id}] Waiting for REPLY from: ${missing.join(', ')} (${this.repliesReceived.size}/${totalOtherProcesses} received)`, 'system');
+                return;
+              }
+              
+              // Get all requesting processes across the entire system
+              const allRequestingProcesses = [];
+              for (const pid in sim.processes) {
+                const proc = sim.processes[pid];
+                if (proc.state === 'requesting' && proc.requestTimestamp !== null) {
+                  allRequestingProcesses.push({
+                    id: pid,
+                    time: proc.requestTimestamp
+                  });
+                }
+              }
+              
+              if (allRequestingProcesses.length === 0) {
+                return;
+              }
+              
+              // Sort to find the process with highest priority (lowest time, then lowest ID)
+              allRequestingProcesses.sort((a, b) => {
+                if (a.time !== b.time) {
+                  return a.time - b.time;
+                }
+                return a.id.localeCompare(b.id);
+              });
+              
+              // Check if this process is at the top
+              const topProcess = allRequestingProcesses[0];
+              if (topProcess.id === this.id) {
+                log(`[${this.id}] Priority check: Top of queue among ${allRequestingProcesses.map(p => `${p.id}(t=${p.time})`).join(', ')}`, 'system');
+                log(`[${this.id}] All REPLY messages received (${this.repliesReceived.size}/${totalOtherProcesses})`, 'system');
                 this.enterCS();
+              } else {
+                log(`[${this.id}] Not top priority. Top is ${topProcess.id}(t=${topProcess.time})`, 'system');
               }
             }
 
             enterCS() {
+              if (sim.csOccupied) {
+                log(`[${this.id}] cannot enter CS - already occupied!`, 'system');
+                return;
+              }
               this.state = 'inCS';
-              log(`[${this.id}] enters CS`, 'system');
+              sim.csOccupied = true;
+              log(`[${this.id}] enters CS (top of priority queue)`, 'system');
             }
 
             releaseCS() {
               if (this.state !== 'inCS') return;
-              this.incrementClock();
+              
+              const releasingId = this.id;
+              const releasingTime = this.requestTimestamp;
+              
               this.state = 'idle';
-              this.requestQueue = this.requestQueue.filter(r => r.id !== this.id);
-              log(`[${this.id}] releases CS at ${this.clock}`, 'release');
-              this.broadcast('RELEASE');
-              // send deferred replies
-              while (this.deferredReplies.length) {
-                const toId = this.deferredReplies.shift();
-                this.sendReply(toId);
-              }
+              sim.csOccupied = false;
+              
+              // Remove this process from its own priority queue
+              this.priorityQueue = this.priorityQueue.filter(r => r.id !== this.id);
+              
+              log(`[${this.id}] releases CS`, 'release');
+              log(`[${this.id}] Priority Queue after release: ${this.formatQueue()}`, 'system');
+              
+              // Broadcast RELEASE to all other processes
+              // Other processes will update their queues when they RECEIVE the message
+              this.broadcast('RELEASE', releasingTime, releasingId);
+              
               this.requestTimestamp = null;
               this.repliesReceived.clear();
+              
+              // DON'T check other processes immediately
+              // They will check when they receive the RELEASE message
+            }
+
+            onRelease(msg) {
+              // Remove the released process from priority queue when message is received
+              this.priorityQueue = this.priorityQueue.filter(r => r.id !== msg.processId);
+              
+              log(`[${this.id}] received RELEASE message from ${msg.from} (processId=${msg.processId})`, 'release');
+              log(`[${this.id}] Priority Queue after receiving RELEASE: ${this.formatQueue()}`, 'system');
+              
+              // After receiving RELEASE, check if this process can now enter CS
+              this.checkEnterCS();
             }
 
             sortQueue() {
-              this.requestQueue.sort((a, b) => a.ts - b.ts || a.id.localeCompare(b.id));
+              // Sort by time (ascending), then by process ID (ascending)
+              this.priorityQueue.sort((a, b) => {
+                if (a.time !== b.time) {
+                  return a.time - b.time;
+                }
+                return a.id.localeCompare(b.id);
+              });
+            }
+
+            formatQueue() {
+              if (this.priorityQueue.length === 0) return '—';
+              return this.priorityQueue.map(r => `${r.id}(t=${r.time})`).join(', ');
             }
           }
 
@@ -906,24 +1012,85 @@
               this.messages = [];
               this.randomDelays = false;
               this.playing = false;
+              this.csOccupied = false; // Global flag to ensure mutual exclusion
+            }
+
+            checkAllProcesses() {
+              // Check all requesting processes to see if any can enter CS
+              for (const id in this.processes) {
+                const proc = this.processes[id];
+                if (proc.state === 'requesting') {
+                  proc.checkEnterCS();
+                  // If one entered, stop checking (mutual exclusion)
+                  if (this.csOccupied) break;
+                }
+              }
+            }
+
+            checkIfShouldYield(procInCS) {
+              // Check if the process in CS should yield to a higher priority request
+              // Get all requesting processes (including the one in CS if it's still considered requesting)
+              const allRequestingProcesses = [];
+              for (const pid in this.processes) {
+                const proc = this.processes[pid];
+                if ((proc.state === 'requesting' || proc.state === 'inCS') && proc.requestTimestamp !== null) {
+                  allRequestingProcesses.push({
+                    id: pid,
+                    time: proc.requestTimestamp
+                  });
+                }
+              }
+              
+              if (allRequestingProcesses.length <= 1) {
+                return; // Only the process in CS is requesting
+              }
+              
+              // Sort to find highest priority
+              allRequestingProcesses.sort((a, b) => {
+                if (a.time !== b.time) {
+                  return a.time - b.time;
+                }
+                return a.id.localeCompare(b.id);
+              });
+              
+              const topProcess = allRequestingProcesses[0];
+              
+              // If the process in CS is not the highest priority, it should yield
+              if (topProcess.id !== procInCS.id) {
+                log(`[${procInCS.id}] yielding CS to higher priority ${topProcess.id}(t=${topProcess.time})`, 'system');
+                procInCS.state = 'requesting'; // Change back to requesting
+                this.csOccupied = false;
+                
+                // Now check if the highest priority process can enter
+                this.checkAllProcesses();
+              }
             }
 
             update(dt) {
               // advance message animations & deliver
               for (const msg of this.messages) msg.elapsed += dt;
               this.deliverDue();
+              
+              // DON'T automatically check processes here
+              // They will check when they receive messages
             }
 
             deliverDue() {
               const due = this.messages.filter(m => m.elapsed >= m.travelDuration);
               for (const msg of due) {
                 this.messages.splice(this.messages.indexOf(msg), 1);
-                this.processes[msg.to].onReceive(msg);
+                if (msg.type === 'RELEASE') {
+                  this.processes[msg.to].onRelease(msg);
+                } else {
+                  this.processes[msg.to].onReceive(msg);
+                }
               }
             }
 
             step() {
+              // If there are messages to deliver, deliver the next one
               if (!this.messages.length) return;
+              
               // pick message with smallest remaining time
               let nextMsg = this.messages.reduce((a, b) => {
                 const ra = a.travelDuration - a.elapsed;
@@ -932,6 +1099,9 @@
               });
               nextMsg.elapsed = nextMsg.travelDuration;
               this.deliverDue();
+              
+              // DON'T automatically check all processes
+              // Processes check themselves when they receive messages
             }
 
             reset() {
@@ -940,6 +1110,7 @@
               for (const id of procs) this.processes[id] = new Process(id);
               this.messages = [];
               this.playing = false;
+              this.csOccupied = false;
               logPanel.textContent = '';
               playPauseBtn.textContent = '▶ Play';
             }
@@ -949,7 +1120,7 @@
           let sim = new Simulator();
 
           // Send message helper
-          function sendMessage(type, from, to, timestamp) {
+          function sendMessage(type, from, to, timestamp, processId) {
             const key = getLinkKey(from, to);
             const linkState = linkStates[key];
             const multiplier = LINK_MULTIPLIERS[linkState];
@@ -957,9 +1128,9 @@
             if (sim.randomDelays && isFinite(travel)) {
               travel *= (1 + Math.random() * 2);
             }
-            const msg = new Message(type, from, to, timestamp, travel);
+            const msg = new Message(type, from, to, timestamp, processId, travel);
             sim.messages.push(msg);
-            log(`[${from}] sends ${type}(${timestamp}) to ${to}`, type.toLowerCase());
+            log(`[${from}] sends ${type}(time=${timestamp}, processId=${processId}) to ${to}`, type.toLowerCase());
           }
 
           // Rendering
@@ -1026,7 +1197,7 @@
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
               ctx.font = '16px Arial';
-              ctx.fillText(id + ' (' + p.clock + ')', pos.x, pos.y);
+              ctx.fillText(id + ' (t=' + p.time + ')', pos.x, pos.y);
               ctx.fillText(`${p.state}`, pos.x, pos.y + 20);
             }
             updateStatePanel();
@@ -1152,15 +1323,13 @@
             for (const id in sim.processes) {
               const p = sim.processes[id];
               // Format queues as comma-separated strings
-              const reqs = p.requestQueue
-                .map(r => `${r.id}(${r.ts})`)
-                .join(', ') || '—';
+              const pQueue = p.formatQueue();
               const repliesReceived = [...p.repliesReceived].join(', ') || '—';
               html += `
                 <div style="margin-bottom: 12px;">
-                  <strong>${id}</strong> (clock: ${p.clock})<br>
-                  <em>Request Queue:</em> ${reqs}<br>
-                  <em>Replies received:</em> ${repliesReceived}<br>
+                  <strong>${id}</strong> (time: ${p.time})<br>
+                  <em>Priority Queue:</em> ${pQueue}<br>
+                  <em>Replies received from:</em> ${repliesReceived}<br>
                 </div>
               `;
             }
