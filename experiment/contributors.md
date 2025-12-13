@@ -12,6 +12,6 @@
 
 | SNo. | Name | Email | Institute | GitHub ID |
 | :---: | :---: | :---: | :---: | :---: |
-| 1 | Subhajit Sahu | subhajit.sahu@research.iiit.ac.in | IIIT Hyderabad | wolfram77 |
-| 2 | Ajitanshu Singh | ajitanshu.singh@research.iiit.ac.in | IIIT Hyderabad | ajitanshu19 |
-| 3 | Sai Teja | saiteja.maryala@research.iiit.ac.in | IIIT Hyderabad | saitejaMaryala |
+| 1 | Sai Teja | saiteja.maryala@research.iiit.ac.in | IIIT Hyderabad | saitejaMaryala |
+| 2 | Subhajit Sahu | subhajit.sahu@research.iiit.ac.in | IIIT Hyderabad | wolfram77 |
+| 3 | Ajitanshu Singh | ajitanshu.singh@research.iiit.ac.in | IIIT Hyderabad | ajitanshu19 |
