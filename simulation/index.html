@@ -1,0 +1,1989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Lamport's Algorithm - Interactive Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            min-height: 100dvh;
+            color: #1a202c;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            grid-template-rows: 1fr;
+            height: 100vh;
+            height: 100dvh;
+            max-width: 1800px;
+            margin: 0 auto;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+
+        /* Custom modal for time input */
+        .time-input-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10001;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 15vh;
+        }
+
+        .time-input-modal.active {
+            display: flex;
+        }
+
+        .time-input-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 320px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.2s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .time-input-content h3 {
+            margin: 0 0 16px 0;
+            color: #2d3748;
+            font-size: 1.1rem;
+        }
+
+        .time-input-content input[type="number"] {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 18px;
+            margin-bottom: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .time-input-content input[type="number"]:focus {
+            border-color: #4299e1;
+        }
+
+        .time-input-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .time-input-buttons button {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .time-input-buttons .confirm-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .time-input-buttons .cancel-btn {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .time-input-buttons button:active {
+            transform: scale(0.98);
+        }
+
+        .header {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(66, 153, 225, 0.3);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #48bb78;
+            animation: pulse 2s infinite;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+
+        .simulation-panel {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 30px);
+            height: calc(100dvh - 30px);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            padding: 15px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            flex-shrink: 0;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .panel-title {
+            color: #2d3748;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #simulation-canvas {
+            width: 100%;
+            flex: 1;
+            background: radial-gradient(circle at 50% 50%, #f8fafc 0%, #e2e8f0 100%);
+            display: block;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .controls-grid {
+            display: grid;
+      grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+    /* Ensure all control buttons (Play/Step/Reset) are identical in size */
+    :root { --control-btn-height: 56px; }
+
+    .controls-grid .neu-button {
+      width: 100%;
+      height: var(--control-btn-height);
+    }
+
+    /* Do not let Reset span full width; keep same footprint as others */
+    .controls-grid .reset-button { 
+      grid-column: auto; 
+      margin-top: 0; 
+    }
+
+    /* Legacy rule not needed for grid layout; ensure equal sizing */
+    .controls-grid .neu-button:not(.reset-button) { min-width: 0; }
+
+        .neu-button {
+            color: #fff;
+            font-weight: 500;
+            border: none;
+            outline: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .neu-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .neu-button:active {
+            transform: translateY(0);
+        }
+
+        .neu-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .neu-button.play { 
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        .neu-button.step { 
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        }
+        .neu-button.reset { 
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .side-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            height: calc(100vh - 30px);
+            height: calc(100dvh - 30px);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .side-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .side-panel::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+
+        .side-panel::-webkit-scrollbar-thumb {
+            background: #4299e1;
+            border-radius: 3px;
+        }
+
+        .log-column {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            height: calc(100vh - 30px);
+            height: calc(100dvh - 30px);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .log-column::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .log-column::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+
+        .log-column::-webkit-scrollbar-thumb {
+            background: #4299e1;
+            border-radius: 3px;
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+
+        .info-card:last-child {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-card h3, .info-card h4 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-card h3::before {
+            content: '⚙️';
+            font-size: 1.2em;
+        }
+
+        .info-card h4::before {
+            content: '📊';
+            font-size: 1.1em;
+        }
+
+        .algorithm-steps {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        .step {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 3px solid #4299e1;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            transition: all 0.3s ease;
+        }
+
+        .step:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .step.active {
+            background: linear-gradient(135deg, #f0f8ff 0%, #e0f2fe 100%);
+            border-left-color: #3b82f6;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+        }
+
+        .process-state {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .process-state:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .process-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .process-details {
+            font-size: 0.9rem;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        .log-panel {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.85rem;
+            margin-top: 15px;
+            min-height: 200px;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            animation: fadeIn 0.3s ease-in;
+            line-height: 1.4;
+        }
+
+        .log-entry.request {
+            color: #3498db;
+            background: rgba(52, 152, 219, 0.1);
+            border-left: 3px solid #3498db;
+        }
+
+        .log-entry.reply {
+            color: #27ae60;
+            background: rgba(39, 174, 96, 0.1);
+            border-left: 3px solid #27ae60;
+        }
+
+        .log-entry.release {
+            color: #8e44ad;
+            background: rgba(142, 68, 173, 0.1);
+            border-left: 3px solid #8e44ad;
+        }
+
+        .log-entry.system {
+            color: #4facfe;
+            background: rgba(79, 172, 254, 0.1);
+            border-left: 3px solid #4facfe;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+    .context-menu {
+      position: fixed;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1000;
+            border: 1px solid #e2e8f0;
+      /* Positioned via JS using clientX/clientY */
+        }
+
+        .context-menu button {
+            display: block;
+            width: 100%;
+            padding: 10px 16px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #2d3748;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .context-menu button:hover {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .context-menu button:last-child {
+            margin-bottom: 0;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #4299e1;
+            cursor: pointer;
+        }
+
+        input[type="range"] {
+            width: 100px;
+            height: 6px;
+            border-radius: 3px;
+            background: #e2e8f0;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+
+        .floating-algorithm-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(66, 153, 225, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .floating-algorithm-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(66, 153, 225, 0.5);
+        }
+
+        .floating-algorithm-btn:active {
+            transform: translateY(0);
+        }
+
+        .algorithm-steps-panel {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            width: 400px;
+            max-height: 500px;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            border: 1px solid #e2e8f0;
+            z-index: 999;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .algorithm-steps-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .algorithm-steps-panel::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+
+        .algorithm-steps-panel::-webkit-scrollbar-thumb {
+            background: #4299e1;
+            border-radius: 3px;
+        }
+
+        .algorithm-steps-panel.hidden {
+            transform: translateY(-20px);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .algorithm-steps-panel h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .algorithm-steps-panel h3::before {
+            content: '⚙️';
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 1400px) {
+            .container {
+                grid-template-columns: 280px 1fr 320px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr auto auto;
+                height: auto;
+                min-height: 100vh;
+                min-height: 100dvh;
+                gap: 10px;
+                padding: 10px;
+                overflow-y: auto;
+            }
+            
+            .side-panel {
+                height: auto;
+                max-height: 350px;
+                order: 3;
+            }
+            
+            .simulation-panel {
+                order: 1;
+                min-height: 350px;
+                height: 50vh;
+                height: 50dvh;
+            }
+            
+            .log-column {
+                height: auto;
+                max-height: 300px;
+                order: 2;
+            }
+
+            .floating-algorithm-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 0.8rem;
+                top: 15px;
+                right: 15px;
+            }
+
+            .algorithm-steps-panel {
+                width: calc(100% - 40px);
+                right: 20px;
+                max-height: 400px;
+            }
+        }
+
+        @media (max-width: 800px) {
+            body {
+                overflow-y: auto;
+                position: relative;
+            }
+
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto auto;
+                height: auto;
+                min-height: 100vh;
+                min-height: 100dvh;
+                gap: 8px;
+                padding: 8px;
+                border-radius: 0;
+                overflow-y: auto;
+            }
+            
+            .side-panel {
+                height: auto;
+                max-height: none;
+                order: 2;
+                padding: 15px;
+                gap: 15px;
+            }
+            
+            .simulation-panel {
+                order: 1;
+                min-height: 350px;
+                height: auto;
+                max-height: 55vh;
+                max-height: 55dvh;
+                overflow: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #simulation-canvas {
+                min-height: 350px;
+                min-width: 350px;
+                flex-shrink: 0;
+                touch-action: pan-x pan-y;
+            }
+            
+            .log-column {
+                height: auto;
+                max-height: 250px;
+                order: 3;
+                padding: 15px;
+            }
+
+            .panel-header {
+                padding: 12px 15px;
+            }
+
+            .panel-title {
+                font-size: 1rem;
+            }
+
+            .info-card {
+                padding: 15px;
+                border-radius: 12px;
+            }
+
+            .info-card h3, .info-card h4 {
+                font-size: 1rem;
+                margin-bottom: 12px;
+            }
+
+            .controls-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+
+            .neu-button {
+                padding: 10px 14px;
+                font-size: 0.85rem;
+                border-radius: 10px;
+            }
+
+            :root { --control-btn-height: 48px; }
+
+            .log-panel {
+                padding: 12px;
+                min-height: 150px;
+                font-size: 0.8rem;
+            }
+
+            .log-entry {
+                padding: 6px 10px;
+                margin-bottom: 6px;
+                font-size: 0.8rem;
+            }
+
+            .process-state {
+                padding: 12px;
+                margin-bottom: 8px;
+            }
+
+            .step {
+                padding: 12px;
+                margin-bottom: 10px;
+                font-size: 0.85rem;
+            }
+
+            .floating-algorithm-btn {
+                width: 45px;
+                height: 45px;
+                font-size: 0.75rem;
+                top: 12px;
+                right: 12px;
+                padding: 8px;
+            }
+
+            .algorithm-steps-panel {
+                width: calc(100% - 24px);
+                right: 12px;
+                top: 70px;
+                max-height: 60vh;
+                padding: 15px;
+            }
+
+            .algorithm-steps-panel h3 {
+                font-size: 1rem;
+            }
+
+            .algorithm-steps {
+                padding: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 6px;
+                gap: 6px;
+            }
+
+            .simulation-panel {
+                min-height: 300px;
+                height: auto;
+                max-height: 50vh;
+                max-height: 50dvh;
+                border-radius: 12px;
+                overflow: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #simulation-canvas {
+                min-height: 300px;
+                min-width: 300px;
+                touch-action: pan-x pan-y;
+            }
+
+            .side-panel, .log-column {
+                border-radius: 12px;
+                padding: 12px;
+            }
+
+            .panel-header {
+                padding: 10px 12px;
+                border-radius: 12px 12px 0 0;
+            }
+
+            .panel-title {
+                font-size: 0.9rem;
+            }
+
+            .panel-header p {
+                font-size: 0.7rem;
+                line-height: 1.3;
+            }
+
+            .info-card {
+                padding: 12px;
+                border-radius: 10px;
+            }
+
+            .info-card h3, .info-card h4 {
+                font-size: 0.9rem;
+                margin-bottom: 10px;
+            }
+
+            .info-card h3::before, .info-card h4::before {
+                font-size: 1rem;
+            }
+
+            .controls-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+
+            .neu-button {
+                padding: 8px 10px;
+                font-size: 0.8rem;
+                border-radius: 8px;
+                gap: 4px;
+            }
+
+            :root { --control-btn-height: 42px; }
+
+            .log-panel {
+                padding: 10px;
+                min-height: 120px;
+                font-size: 0.75rem;
+            }
+
+            .log-entry {
+                padding: 5px 8px;
+                margin-bottom: 5px;
+                font-size: 0.75rem;
+                line-height: 1.3;
+            }
+
+            .process-state {
+                padding: 10px;
+                margin-bottom: 6px;
+            }
+
+            .process-name {
+                font-size: 0.9rem;
+            }
+
+            .process-details {
+                font-size: 0.8rem;
+            }
+
+            .step {
+                padding: 10px;
+                margin-bottom: 8px;
+                font-size: 0.8rem;
+                line-height: 1.4;
+            }
+
+            .floating-algorithm-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 0.7rem;
+                top: 10px;
+                right: 10px;
+            }
+
+            .algorithm-steps-panel {
+                width: calc(100% - 20px);
+                right: 10px;
+                top: 60px;
+                max-height: 55vh;
+                padding: 12px;
+            }
+
+            .algorithm-steps-panel h3 {
+                font-size: 0.9rem;
+                margin-bottom: 10px;
+            }
+
+            .algorithm-steps {
+                padding: 10px;
+                margin-top: 10px;
+            }
+
+            .context-menu {
+                border-radius: 10px;
+                padding: 10px;
+            }
+
+            .context-menu button {
+                padding: 12px 14px;
+                font-size: 0.85rem;
+                border-radius: 6px;
+            }
+
+            /* Adjust speed slider for mobile */
+            input[type="range"] {
+                width: 80px;
+            }
+
+            input[type="range"]::-webkit-slider-thumb {
+                width: 18px;
+                height: 18px;
+            }
+
+            input[type="range"]::-moz-range-thumb {
+                width: 18px;
+                height: 18px;
+            }
+        }
+
+        /* Touch-friendly adjustments */
+        @media (hover: none) and (pointer: coarse) {
+            .neu-button {
+                min-height: 44px;
+            }
+
+            .context-menu button {
+                min-height: 44px;
+            }
+
+            input[type="checkbox"] {
+                width: 22px;
+                height: 22px;
+            }
+        }
+
+        /* Mobile Portrait Orientation - Show helpful tip instead of blocking */
+        .rotate-device-overlay {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 10000;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            padding: 12px 20px;
+            gap: 12px;
+        }
+
+        .rotate-device-overlay .rotate-icon {
+            font-size: 1.5rem;
+            animation: rotateAnimation 2s ease-in-out infinite;
+        }
+
+        .rotate-device-overlay h2 {
+            display: none;
+        }
+
+        .rotate-device-overlay p {
+            font-size: 0.85rem;
+            opacity: 0.95;
+            line-height: 1.3;
+            margin: 0;
+        }
+
+        .rotate-device-overlay .dismiss-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        @keyframes rotateAnimation {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-15deg); }
+            75% { transform: rotate(15deg); }
+        }
+
+        @media screen and (max-width: 768px) and (orientation: portrait) {
+            .rotate-device-overlay {
+                display: flex;
+            }
+            
+            .rotate-device-overlay.dismissed {
+                display: none;
+            }
+
+            /* Add bottom padding to container when tip is shown */
+            .container {
+                padding-bottom: 60px;
+            }
+        }
+
+        /* Landscape mobile adjustments */
+        @media screen and (max-height: 500px) and (orientation: landscape) {
+            .container {
+                grid-template-columns: 250px 1fr 250px;
+                grid-template-rows: 1fr;
+                height: 100vh;
+                height: 100dvh;
+                overflow: hidden;
+            }
+
+            .side-panel, .log-column {
+                height: calc(100vh - 20px);
+                height: calc(100dvh - 20px);
+                max-height: none;
+            }
+
+            .simulation-panel {
+                height: calc(100vh - 20px);
+                height: calc(100dvh - 20px);
+                min-height: auto;
+            }
+
+            .info-card {
+                padding: 10px;
+            }
+
+            .controls-grid {
+                gap: 6px;
+            }
+
+            :root { --control-btn-height: 40px; }
+
+            .neu-button {
+                padding: 8px 12px;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="rotate-device-overlay" id="rotate-overlay">
+        <div class="rotate-icon">📱</div>
+        <h2>Rotate Your Device</h2>
+        <p>Rotate to landscape for best experience</p>
+        <button class="dismiss-btn" onclick="document.getElementById('rotate-overlay').classList.add('dismissed')">✕</button>
+    </div>
+
+    <div class="container">
+        <div class="side-panel">
+            <div class="info-card">
+                <h4>Control Panel</h4>
+                <div class="controls-grid">
+                    <button id="play-pause-btn" class="neu-button play">▶ Play</button>
+                    <button id="step-btn" class="neu-button step">👣 Step</button>
+                    <button id="reset-btn" class="neu-button reset reset-button">🔄 Reset</button>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px; color: #64748b; font-size: 0.85rem;">
+                    <label style="display: flex; align-items: center; gap: 6px;">
+                        <input type="checkbox" id="random-delays">
+                        Random Network Delays
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px;">
+                        Speed: <input type="range" id="speed-slider" min="0.1" max="3" step="0.1" value="0.5" style="margin-left: 6px;">
+                        <span id="speed-value" style="min-width: 30px; font-weight: 600; color: #3182ce;">0.5x</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h4>Process States</h4>
+                <div id="process-states"></div>
+            </div>
+        </div>
+
+        <div class="simulation-panel">
+            <div class="panel-header">
+                <div class="panel-title">Process Network Simulation</div>
+                <p style="color: #64748b; font-size: 0.8rem;">
+                    🖱️ Click nodes for context menu • ⌨️ Press 1-4 to request CS (enter time) • Press R to release
+                </p>
+            </div>
+            <canvas id="simulation-canvas"></canvas>
+        </div>
+
+        <div class="log-column">
+            <div class="info-card">
+                <h4>Event Log</h4>
+                <div id="log-panel" class="log-panel"></div>
+            </div>
+        </div>
+
+        <!-- Context Menu -->
+        <div id="context-menu" class="context-menu">
+            <button data-action="request">🔒 Request CS</button>
+            <button data-action="release">🔓 Release CS</button>
+        </div>
+
+        <!-- Floating Algorithm Steps Button -->
+        <button id="algorithm-steps-btn" class="floating-algorithm-btn">
+            📋 Steps
+        </button>
+
+        <!-- Algorithm Steps Panel -->
+        <div id="algorithm-steps-panel" class="algorithm-steps-panel hidden">
+            <div class="panel-content">
+                <h3>Algorithm Steps</h3>
+                <div class="algorithm-steps">
+                    <div class="step" id="step-1">
+                        <strong>1. Request CS:</strong> Process takes time input from user and broadcasts REQUEST with its process ID and time to all processes
+                    </div>
+                    <div class="step" id="step-2">
+                        <strong>2. Receive REQUEST & Send REPLY:</strong> When a process receives a REQUEST, it adds it to its priority queue (sorted by time, then process ID) and sends a REPLY acknowledgment back
+                    </div>
+                    <div class="step" id="step-3">
+                        <strong>3. Enter CS:</strong> A process enters CS when it has received REPLY from ALL other processes AND it's at the top of its priority queue
+                    </div>
+                    <div class="step" id="step-4">
+                        <strong>4. Release CS:</strong> Process broadcasts RELEASE and removes itself from all priority queues. Next process in queue can enter CS
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Time Input Modal -->
+        <div id="time-input-modal" class="time-input-modal">
+            <div class="time-input-content">
+                <h3 id="time-input-title">Enter time for P1 to request CS:</h3>
+                <input type="number" id="time-input-field" min="0" step="any" placeholder="Enter time value">
+                <div class="time-input-buttons">
+                    <button class="cancel-btn" id="time-input-cancel">Cancel</button>
+                    <button class="confirm-btn" id="time-input-confirm">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Implements Lamport's mutual exclusion simulation with 4 processes on an HTML5 canvas.
+        window.addEventListener('DOMContentLoaded', () => {
+          // Constants
+          const BASE_NODE_RADIUS = 60;
+          let NODE_RADIUS = BASE_NODE_RADIUS;
+          const BASE_TRAVEL_TIME = 5000; // ms
+          const LINK_MULTIPLIERS = [1, 4]; // normal, slow
+          const NODE_COLORS = { idle: '#888', requesting: '#ff0', inCS: '#0f0' };
+          const MSG_COLORS = { REQUEST: '#3498db', REPLY: '#27ae60', RELEASE: '#8e44ad' };
+
+          // Responsive node radius calculation
+          function calculateNodeRadius() {
+            const minDimension = Math.min(canvas.width, canvas.height);
+            if (minDimension < 300) {
+              return 35;
+            } else if (minDimension < 400) {
+              return 45;
+            } else if (minDimension < 500) {
+              return 50;
+            }
+            return BASE_NODE_RADIUS;
+          }
+
+          // Canvas setup
+          const canvas = document.getElementById('simulation-canvas');
+          const ctx = canvas.getContext('2d');
+          let isInputActive = false; // Track when prompt/input is active
+          let lastCanvasWidth = 0;
+          let lastCanvasHeight = 0;
+          
+          function resizeCanvas() {
+            // Skip resize if input is active (keyboard open on mobile)
+            if (isInputActive) return;
+            
+            const newWidth = canvas.clientWidth;
+            const newHeight = canvas.clientHeight;
+            
+            // Only resize if dimensions actually changed significantly
+            // This prevents jitter from mobile keyboard
+            if (Math.abs(newWidth - lastCanvasWidth) < 5 && Math.abs(newHeight - lastCanvasHeight) < 5) {
+              return;
+            }
+            
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            lastCanvasWidth = newWidth;
+            lastCanvasHeight = newHeight;
+            NODE_RADIUS = calculateNodeRadius();
+          }
+          window.addEventListener('resize', resizeCanvas);
+          // Also handle orientation change explicitly
+          window.addEventListener('orientationchange', () => {
+            setTimeout(resizeCanvas, 100);
+          });
+          resizeCanvas();
+
+          // UI elements
+          const contextMenu = document.getElementById('context-menu');
+          let contextTarget = null;
+          const playPauseBtn = document.getElementById('play-pause-btn');
+          const stepBtn = document.getElementById('step-btn');
+          const resetBtn = document.getElementById('reset-btn');
+          const randomDelaysChk = document.getElementById('random-delays');
+          const statePanel = document.getElementById('process-states');
+          const logPanel = document.getElementById('log-panel');
+          const algorithmStepsBtn = document.getElementById('algorithm-steps-btn');
+          const algorithmStepsPanel = document.getElementById('algorithm-steps-panel');
+          const speedSlider = document.getElementById('speed-slider');
+          const speedValue = document.getElementById('speed-value');
+          
+          // Animation speed multiplier
+          let speedMultiplier = 0.5;
+
+          // Node positions
+          const nodePositions = {
+            P1: { x: NODE_RADIUS * 2, y: NODE_RADIUS * 2 },
+            P2: { x: canvas.width - NODE_RADIUS * 2, y: NODE_RADIUS * 2 },
+            P3: { x: canvas.width - NODE_RADIUS * 2, y: canvas.height - NODE_RADIUS * 2 },
+            P4: { x: NODE_RADIUS * 2, y: canvas.height - NODE_RADIUS * 2 }
+          };
+
+          // Link states: key = "P1-P2", etc.
+          let linkStates = {};
+          const procs = Object.keys(nodePositions);
+          for (let i = 0; i < procs.length; i++) {
+            for (let j = i + 1; j < procs.length; j++) {
+              linkStates[`${procs[i]}-${procs[j]}`] = 0; // normal
+            }
+          }
+
+          function getLinkKey(a, b) {
+            return a < b ? `${a}-${b}` : `${b}-${a}`;
+          }
+
+          // Logging
+          function log(msg, type = 'system') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = msg;
+            logPanel.appendChild(entry);
+            logPanel.scrollTop = logPanel.scrollHeight;
+          }
+
+          // Custom time input modal
+          const timeInputModal = document.getElementById('time-input-modal');
+          const timeInputTitle = document.getElementById('time-input-title');
+          const timeInputField = document.getElementById('time-input-field');
+          const timeInputConfirm = document.getElementById('time-input-confirm');
+          const timeInputCancel = document.getElementById('time-input-cancel');
+          let timeInputCallback = null;
+
+          function showTimeInputModal(processId, defaultValue, callback) {
+            isInputActive = true;
+            timeInputCallback = callback;
+            timeInputTitle.textContent = `Enter time for ${processId} to request CS:`;
+            timeInputField.value = defaultValue;
+            timeInputModal.classList.add('active');
+            // Focus after a small delay to ensure modal is visible
+            setTimeout(() => timeInputField.focus(), 100);
+          }
+
+          function hideTimeInputModal(confirmed) {
+            timeInputModal.classList.remove('active');
+            isInputActive = false;
+            
+            if (timeInputCallback) {
+              if (confirmed) {
+                const newTime = parseFloat(timeInputField.value);
+                if (isNaN(newTime) || newTime < 0) {
+                  log('Invalid time value. Please enter a non-negative number.', 'system');
+                  timeInputCallback(null);
+                } else {
+                  timeInputCallback(newTime);
+                }
+              } else {
+                timeInputCallback(null);
+              }
+              timeInputCallback = null;
+            }
+          }
+
+          timeInputConfirm.addEventListener('click', () => hideTimeInputModal(true));
+          timeInputCancel.addEventListener('click', () => hideTimeInputModal(false));
+          
+          // Handle Enter key in input field
+          timeInputField.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              hideTimeInputModal(true);
+            } else if (e.key === 'Escape') {
+              e.preventDefault();
+              hideTimeInputModal(false);
+            }
+          });
+
+          // Close modal when clicking outside
+          timeInputModal.addEventListener('click', (e) => {
+            if (e.target === timeInputModal) {
+              hideTimeInputModal(false);
+            }
+          });
+
+          // Message class
+          class Message {
+            constructor(type, from, to, timestamp, processId, travelDuration) {
+              this.type = type;
+              this.from = from;
+              this.to = to;
+              this.timestamp = timestamp;
+              this.processId = processId; // Process ID of requester
+              this.travelDuration = travelDuration;
+              this.elapsed = 0;
+            }
+          }
+
+          // Process class
+          class Process {
+            constructor(id) {
+              this.id = id;
+              this.time = 0; // User-defined time
+              this.state = 'idle';
+              this.requestTimestamp = null;
+              this.repliesReceived = new Set(); // Track which processes have sent REPLY messages
+              this.priorityQueue = []; // Priority queue based on time and process ID
+            }
+
+            broadcast(type, timestamp = null, processId = null) {
+              const ts = timestamp !== null ? timestamp : this.time;
+              const pid = processId !== null ? processId : this.id;
+              for (const otherId of procs) {
+                if (otherId === this.id) continue;
+                sendMessage(type, this.id, otherId, ts, pid);
+              }
+            }
+
+            requestCS() {
+              if (this.state === 'inCS') { 
+                log(`${this.id} already in CS`, 'system'); 
+                return; 
+              }
+              if (this.state === 'requesting') {
+                log(`${this.id} is already requesting CS`, 'system');
+                return;
+              }
+              
+              // Use custom modal for time input
+              const processRef = this;
+              showTimeInputModal(this.id, this.time, (newTime) => {
+                if (newTime === null) return; // User cancelled
+                processRef.executeRequestCS(newTime);
+              });
+            }
+
+            executeRequestCS(newTime) {
+              this.time = newTime;
+              this.state = 'requesting'; // Always start as requesting (yellow)
+              this.requestTimestamp = this.time;
+              this.repliesReceived.clear();
+              
+              // Add own request to priority queue
+              this.priorityQueue.push({ id: this.id, time: this.time });
+              this.sortQueue();
+              
+              log(`[${this.id}] requests CS with time=${this.time} and processId=${this.id}`, 'request');
+              
+              // Broadcast REQUEST to all other processes
+              // They will receive it via message delivery (asynchronous)
+              this.broadcast('REQUEST', this.time, this.id);
+              
+              // Add this request to all other processes' queues (for immediate visibility)
+              // but DON'T mark as received yet - that happens when message arrives
+              for (const otherId in sim.processes) {
+                if (otherId !== this.id) {
+                  const otherProc = sim.processes[otherId];
+                  
+                  // Add this process to other's queue (for priority calculation)
+                  otherProc.priorityQueue.push({ id: this.id, time: this.time });
+                  otherProc.sortQueue();
+                }
+              }
+              
+              log(`[${this.id}] in requesting state. Waiting for REPLY messages from other processes...`, 'system');
+            }
+
+            onReceive(msg) {
+              if (msg.type === 'REQUEST') {
+                log(`[${this.id}] received REQUEST message from ${msg.from} (processId=${msg.processId}, time=${msg.timestamp})`, 'request');
+                
+                // Send REPLY back to the requester
+                sendMessage('REPLY', this.id, msg.from, msg.timestamp, msg.processId);
+                log(`[${this.id}] sends REPLY to ${msg.from}`, 'reply');
+              } else if (msg.type === 'REPLY') {
+                // Mark that we received a REPLY from this process
+                this.repliesReceived.add(msg.from);
+                
+                log(`[${this.id}] received REPLY message from ${msg.from}`, 'reply');
+                log(`[${this.id}] Replies received from: ${[...this.repliesReceived].join(', ')}`, 'system');
+                
+                // Check if we can now enter CS
+                this.checkEnterCS();
+              }
+            }
+
+            checkEnterCS() {
+              // Can enter CS if:
+              // 1. CS is not occupied
+              // 2. This process is requesting
+              // 3. This process has the lowest (time, processId) among ALL requesting processes
+              // 4. Has received REPLY from all OTHER processes (not including itself)
+              if (sim.csOccupied) {
+                return; // CS already occupied, cannot enter
+              }
+              
+              if (this.state !== 'requesting') {
+                return;
+              }
+              
+              // Count total number of OTHER processes (excluding self)
+              const totalOtherProcesses = Object.keys(sim.processes).length - 1;
+              
+              // Check if we have received replies from ALL other processes
+              if (this.repliesReceived.size < totalOtherProcesses) {
+                const allProcessIds = Object.keys(sim.processes).filter(pid => pid !== this.id);
+                const missing = allProcessIds.filter(pid => !this.repliesReceived.has(pid));
+                log(`[${this.id}] Waiting for REPLY from: ${missing.join(', ')} (${this.repliesReceived.size}/${totalOtherProcesses} received)`, 'system');
+                return;
+              }
+              
+              // Get all requesting processes across the entire system
+              const allRequestingProcesses = [];
+              for (const pid in sim.processes) {
+                const proc = sim.processes[pid];
+                if (proc.state === 'requesting' && proc.requestTimestamp !== null) {
+                  allRequestingProcesses.push({
+                    id: pid,
+                    time: proc.requestTimestamp
+                  });
+                }
+              }
+              
+              if (allRequestingProcesses.length === 0) {
+                return;
+              }
+              
+              // Sort to find the process with highest priority (lowest time, then lowest ID)
+              allRequestingProcesses.sort((a, b) => {
+                if (a.time !== b.time) {
+                  return a.time - b.time;
+                }
+                return a.id.localeCompare(b.id);
+              });
+              
+              // Check if this process is at the top
+              const topProcess = allRequestingProcesses[0];
+              if (topProcess.id === this.id) {
+                log(`[${this.id}] Priority check: Top of queue among ${allRequestingProcesses.map(p => `${p.id}(t=${p.time})`).join(', ')}`, 'system');
+                log(`[${this.id}] All REPLY messages received (${this.repliesReceived.size}/${totalOtherProcesses})`, 'system');
+                this.enterCS();
+              } else {
+                log(`[${this.id}] Not top priority. Top is ${topProcess.id}(t=${topProcess.time})`, 'system');
+              }
+            }
+
+            enterCS() {
+              if (sim.csOccupied) {
+                log(`[${this.id}] cannot enter CS - already occupied!`, 'system');
+                return;
+              }
+              this.state = 'inCS';
+              sim.csOccupied = true;
+              log(`[${this.id}] enters CS (top of priority queue)`, 'system');
+            }
+
+            releaseCS() {
+              if (this.state !== 'inCS') return;
+              
+              const releasingId = this.id;
+              const releasingTime = this.requestTimestamp;
+              
+              this.state = 'idle';
+              sim.csOccupied = false;
+              
+              // Remove this process from its own priority queue
+              this.priorityQueue = this.priorityQueue.filter(r => r.id !== this.id);
+              
+              log(`[${this.id}] releases CS`, 'release');
+              log(`[${this.id}] Priority Queue after release: ${this.formatQueue()}`, 'system');
+              
+              // Broadcast RELEASE to all other processes
+              // Other processes will update their queues when they RECEIVE the message
+              this.broadcast('RELEASE', releasingTime, releasingId);
+              
+              this.requestTimestamp = null;
+              this.repliesReceived.clear();
+              
+              // DON'T check other processes immediately
+              // They will check when they receive the RELEASE message
+            }
+
+            onRelease(msg) {
+              // Remove the released process from priority queue when message is received
+              this.priorityQueue = this.priorityQueue.filter(r => r.id !== msg.processId);
+              
+              log(`[${this.id}] received RELEASE message from ${msg.from} (processId=${msg.processId})`, 'release');
+              log(`[${this.id}] Priority Queue after receiving RELEASE: ${this.formatQueue()}`, 'system');
+              
+              // After receiving RELEASE, check if this process can now enter CS
+              this.checkEnterCS();
+            }
+
+            sortQueue() {
+              // Sort by time (ascending), then by process ID (ascending)
+              this.priorityQueue.sort((a, b) => {
+                if (a.time !== b.time) {
+                  return a.time - b.time;
+                }
+                return a.id.localeCompare(b.id);
+              });
+            }
+
+            formatQueue() {
+              if (this.priorityQueue.length === 0) return '—';
+              return this.priorityQueue.map(r => `${r.id}(t=${r.time})`).join(', ');
+            }
+          }
+
+          // Simulator class
+          class Simulator {
+            constructor() {
+              this.processes = {};
+              for (const id of procs) this.processes[id] = new Process(id);
+              this.messages = [];
+              this.randomDelays = false;
+              this.playing = false;
+              this.csOccupied = false; // Global flag to ensure mutual exclusion
+            }
+
+            checkAllProcesses() {
+              // Check all requesting processes to see if any can enter CS
+              for (const id in this.processes) {
+                const proc = this.processes[id];
+                if (proc.state === 'requesting') {
+                  proc.checkEnterCS();
+                  // If one entered, stop checking (mutual exclusion)
+                  if (this.csOccupied) break;
+                }
+              }
+            }
+
+            checkIfShouldYield(procInCS) {
+              // Check if the process in CS should yield to a higher priority request
+              // Get all requesting processes (including the one in CS if it's still considered requesting)
+              const allRequestingProcesses = [];
+              for (const pid in this.processes) {
+                const proc = this.processes[pid];
+                if ((proc.state === 'requesting' || proc.state === 'inCS') && proc.requestTimestamp !== null) {
+                  allRequestingProcesses.push({
+                    id: pid,
+                    time: proc.requestTimestamp
+                  });
+                }
+              }
+              
+              if (allRequestingProcesses.length <= 1) {
+                return; // Only the process in CS is requesting
+              }
+              
+              // Sort to find highest priority
+              allRequestingProcesses.sort((a, b) => {
+                if (a.time !== b.time) {
+                  return a.time - b.time;
+                }
+                return a.id.localeCompare(b.id);
+              });
+              
+              const topProcess = allRequestingProcesses[0];
+              
+              // If the process in CS is not the highest priority, it should yield
+              if (topProcess.id !== procInCS.id) {
+                log(`[${procInCS.id}] yielding CS to higher priority ${topProcess.id}(t=${topProcess.time})`, 'system');
+                procInCS.state = 'requesting'; // Change back to requesting
+                this.csOccupied = false;
+                
+                // Now check if the highest priority process can enter
+                this.checkAllProcesses();
+              }
+            }
+
+            update(dt) {
+              // advance message animations & deliver
+              for (const msg of this.messages) msg.elapsed += dt;
+              this.deliverDue();
+              
+              // DON'T automatically check processes here
+              // They will check when they receive messages
+            }
+
+            deliverDue() {
+              const due = this.messages.filter(m => m.elapsed >= m.travelDuration);
+              for (const msg of due) {
+                this.messages.splice(this.messages.indexOf(msg), 1);
+                if (msg.type === 'RELEASE') {
+                  this.processes[msg.to].onRelease(msg);
+                } else {
+                  this.processes[msg.to].onReceive(msg);
+                }
+              }
+            }
+
+            step() {
+              // If there are messages to deliver, deliver the next one
+              if (!this.messages.length) return;
+              
+              // pick message with smallest remaining time
+              let nextMsg = this.messages.reduce((a, b) => {
+                const ra = a.travelDuration - a.elapsed;
+                const rb = b.travelDuration - b.elapsed;
+                return ra < rb ? a : b;
+              });
+              nextMsg.elapsed = nextMsg.travelDuration;
+              this.deliverDue();
+              
+              // DON'T automatically check all processes
+              // Processes check themselves when they receive messages
+            }
+
+            reset() {
+              for (const key in linkStates) linkStates[key] = 0;
+              this.processes = {};
+              for (const id of procs) this.processes[id] = new Process(id);
+              this.messages = [];
+              this.playing = false;
+              this.csOccupied = false;
+              logPanel.textContent = '';
+              playPauseBtn.textContent = '▶ Play';
+            }
+          }
+
+          // Create simulator
+          let sim = new Simulator();
+
+          // Send message helper
+          function sendMessage(type, from, to, timestamp, processId) {
+            const key = getLinkKey(from, to);
+            const linkState = linkStates[key];
+            const multiplier = LINK_MULTIPLIERS[linkState];
+            let travel = BASE_TRAVEL_TIME * multiplier;
+            if (sim.randomDelays && isFinite(travel)) {
+              travel *= (1 + Math.random() * 2);
+            }
+            const msg = new Message(type, from, to, timestamp, processId, travel);
+            sim.messages.push(msg);
+            log(`[${from}] sends ${type}(time=${timestamp}, processId=${processId}) to ${to}`, type.toLowerCase());
+          }
+
+          // Rendering
+          function render() {
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+            
+            // Recalculate node radius for responsive sizing
+            NODE_RADIUS = calculateNodeRadius();
+            
+            // Calculate responsive font sizes
+            const labelFontSize = NODE_RADIUS < 45 ? 12 : 16;
+            const stateFontSize = NODE_RADIUS < 45 ? 10 : 14;
+            const msgFontSize = NODE_RADIUS < 45 ? 10 : 12;
+            const msgRadius = NODE_RADIUS < 45 ? 14 : 20;
+            const linkWidth = NODE_RADIUS < 45 ? 6 : 10;
+            
+            // Update node positions based on current canvas size
+            const padding = NODE_RADIUS * 1.5;
+            nodePositions.P1 = { x: padding, y: padding };
+            nodePositions.P2 = { x: w - padding, y: padding };
+            nodePositions.P3 = { x: w - padding, y: h - padding };
+            nodePositions.P4 = { x: padding, y: h - padding };
+            
+            // draw links
+            ctx.lineWidth = linkWidth;
+            for (const key in linkStates) {
+              const [a, b] = key.split('-');
+              const { x: x1, y: y1 } = nodePositions[a];
+              const { x: x2, y: y2 } = nodePositions[b];
+              const state = linkStates[key];
+              if (state === 0) ctx.strokeStyle = '#aaa';
+              else ctx.strokeStyle = '#fa0';
+              ctx.beginPath();
+              ctx.moveTo(x1, y1);
+              ctx.lineTo(x2, y2);
+              ctx.stroke();
+            }
+            // draw messages
+            for (const m of sim.messages) {
+              const fromPos = nodePositions[m.from];
+              const toPos = nodePositions[m.to];
+              const frac = Math.min(m.elapsed / m.travelDuration, 1);
+              const x = fromPos.x + (toPos.x - fromPos.x) * frac;
+              const y = fromPos.y + (toPos.y - fromPos.y) * frac;
+              ctx.fillStyle = MSG_COLORS[m.type];
+              ctx.beginPath();
+              ctx.arc(x, y, msgRadius, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.save();
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.font = `bold ${msgFontSize}px Inter, Arial, sans-serif`;
+              // Outline for contrast on any background
+              ctx.lineWidth = 3;
+              ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+              ctx.strokeText(m.type, x, y);
+              // Fill text
+              ctx.fillStyle = '#ffffff';
+              ctx.fillText(m.type, x, y);
+              ctx.restore();
+            }
+            // draw nodes
+            for (const id in sim.processes) {
+              const p = sim.processes[id];
+              const pos = nodePositions[id];
+              ctx.fillStyle = NODE_COLORS[p.state];
+              ctx.beginPath();
+              ctx.arc(pos.x, pos.y, NODE_RADIUS, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.strokeStyle = '#fff';
+              ctx.lineWidth = 2;
+              ctx.stroke();
+              ctx.fillStyle = '#000';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.font = `${labelFontSize}px Arial`;
+              ctx.fillText(id + ' (t=' + p.time + ')', pos.x, pos.y - (stateFontSize * 0.3));
+              ctx.font = `${stateFontSize}px Arial`;
+              ctx.fillText(`${p.state}`, pos.x, pos.y + (labelFontSize * 0.8));
+            }
+            updateStatePanel();
+          }
+
+          // Animation loop
+          let lastTime = performance.now();
+          function animate(time) {
+            const dt = (time - lastTime) * speedMultiplier;
+            lastTime = time;
+            if (sim.playing) sim.update(dt);
+            render();
+            requestAnimationFrame(animate);
+          }
+          requestAnimationFrame(animate);
+
+          // UI event handlers
+
+          // Canvas click: detect node or link
+          function handleCanvasInteraction(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+            // node detection
+            for (const id in nodePositions) {
+              const pos = nodePositions[id];
+              const dx = x - pos.x, dy = y - pos.y;
+              if (Math.hypot(dx, dy) < NODE_RADIUS) {
+                // show context menu
+                contextTarget = id;
+                
+                // Make menu visible but off-screen to measure it
+                contextMenu.style.visibility = 'hidden';
+                contextMenu.style.display = 'block';
+                
+                const menuWidth = contextMenu.offsetWidth;
+                const menuHeight = contextMenu.offsetHeight;
+                const vw = window.innerWidth;
+                const vh = window.innerHeight;
+                const padding = 10; // Minimum padding from screen edges
+                
+                // Calculate position - prefer to show menu where there's more space
+                let left, top;
+                
+                // For nodes on the right side (P2, P3), show menu to the left of the tap
+                if (clientX > vw / 2) {
+                  left = clientX - menuWidth - padding;
+                } else {
+                  left = clientX + padding;
+                }
+                
+                // For nodes on the bottom, show menu above the tap
+                if (clientY > vh / 2) {
+                  top = clientY - menuHeight - padding;
+                } else {
+                  top = clientY + padding;
+                }
+                
+                // Final bounds check to ensure menu stays on screen
+                left = Math.max(padding, Math.min(left, vw - menuWidth - padding));
+                top = Math.max(padding, Math.min(top, vh - menuHeight - padding));
+                
+                contextMenu.style.left = left + 'px';
+                contextMenu.style.top = top + 'px';
+                contextMenu.style.visibility = 'visible';
+                return true;
+              }
+            }
+            // link detection
+            for (const key in linkStates) {
+              const [a, b] = key.split('-');
+              const p1 = nodePositions[a], p2 = nodePositions[b];
+              // point-line distance
+              const t = ((x-p1.x)*(p2.x-p1.x)+(y-p1.y)*(p2.y-p1.y)) /
+                        ((p2.x-p1.x)**2+(p2.y-p1.y)**2);
+              if (t >= 0 && t <= 1) {
+                const projX = p1.x + t*(p2.x-p1.x);
+                const projY = p1.y + t*(p2.y-p1.y);
+                const dist = Math.hypot(x-projX, y-projY);
+                if (dist < 12) { // Increased hit area for touch
+                  // toggle link
+                  linkStates[key] = (linkStates[key] + 1) % LINK_MULTIPLIERS.length;
+                  const state = linkStates[key];
+                  if (state === 0) log(`Link ${key} → normal speed`, 'system');
+                  else if (state === 1) log(`Link ${key} → slowed`, 'system');
+                  else log(`Link ${key} → halted`, 'system');
+                  // adjust any in-flight messages on this link
+                  sim.messages.forEach(msg => {
+                    if (getLinkKey(msg.from, msg.to) === key) {
+                      const multiplier = LINK_MULTIPLIERS[linkStates[key]];
+                      const newTotal = BASE_TRAVEL_TIME * multiplier;
+                      // preserve fraction already traveled
+                      const frac = msg.elapsed / msg.travelDuration;
+                      msg.travelDuration = newTotal;
+                      msg.elapsed = frac * newTotal;
+                    }
+                  });
+                  return true;
+                }
+              }
+            }
+            // otherwise hide context menu
+            contextMenu.style.display = 'none';
+            return false;
+          }
+
+          canvas.addEventListener('mousedown', e => {
+            handleCanvasInteraction(e.clientX, e.clientY);
+          });
+
+          // Touch support for mobile
+          canvas.addEventListener('touchstart', e => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            handleCanvasInteraction(touch.clientX, touch.clientY);
+          }, { passive: false });
+
+          // Context menu action
+          contextMenu.addEventListener('click', e => {
+            const action = e.target.dataset.action;
+            const proc = sim.processes[contextTarget];
+            if (action === 'request') proc.requestCS();
+            else if (action === 'release') proc.releaseCS();
+            contextMenu.style.display = 'none';
+          });
+
+          // Control panel
+          playPauseBtn.addEventListener('click', () => {
+            sim.playing = !sim.playing;
+            playPauseBtn.innerHTML = sim.playing ? '⏸ Pause' : '▶ Play';
+          });
+          stepBtn.addEventListener('click', () => sim.step());
+          resetBtn.addEventListener('click', () => sim.reset());
+          
+          // Algorithm steps toggle
+          if (algorithmStepsBtn && algorithmStepsPanel) {
+            algorithmStepsBtn.addEventListener('click', () => {
+              algorithmStepsPanel.classList.toggle('hidden');
+            });
+            
+            // Hide algorithm steps panel when clicking outside
+            document.addEventListener('click', (e) => {
+              if (!algorithmStepsBtn.contains(e.target) && !algorithmStepsPanel.contains(e.target)) {
+                algorithmStepsPanel.classList.add('hidden');
+              }
+            });
+          }
+          
+          if (randomDelaysChk) {
+            randomDelaysChk.addEventListener('change', e => {
+              sim.randomDelays = e.target.checked;
+            });
+          }
+          
+          // Speed slider control
+          if (speedSlider && speedValue) {
+            speedSlider.addEventListener('input', e => {
+              speedMultiplier = parseFloat(e.target.value);
+              speedValue.textContent = speedMultiplier.toFixed(1) + 'x';
+            });
+          }
+
+          function updateStatePanel() {
+            let html = '';
+            for (const id in sim.processes) {
+              const p = sim.processes[id];
+              // Format queues as comma-separated strings
+              const pQueue = p.formatQueue();
+              const repliesReceived = [...p.repliesReceived].join(', ') || '—';
+              html += `
+                <div style="margin-bottom: 12px;">
+                  <strong>${id}</strong> (time: ${p.time})<br>
+                  <em>Priority Queue:</em> ${pQueue}<br>
+                  <em>Replies received from:</em> ${repliesReceived}<br>
+                </div>
+              `;
+            }
+            statePanel.innerHTML = html;
+          }
+
+          // Keyboard shortcuts
+          document.addEventListener('keydown', (e) => {
+            if (e.key >= '1' && e.key <= '4') {
+              const processId = 'P' + e.key;
+              sim.processes[processId].requestCS();
+            } else if (e.key.toLowerCase() === 'r') {
+              // Release CS for any process currently in CS
+              for (const id in sim.processes) {
+                if (sim.processes[id].state === 'inCS') {
+                  sim.processes[id].releaseCS();
+                }
+              }
+            }
+          });
+        });
+    </script>
+<script src="../assets/js/iframeResize.js"></script>
+        
+        </body>
+</html>
