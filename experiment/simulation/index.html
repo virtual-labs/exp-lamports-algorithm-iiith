@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Lamport's Algorithm - Interactive Learning</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -16,8 +16,13 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            min-height: 100dvh;
             color: #1a202c;
             overflow: hidden;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
         }
 
         .container {
@@ -25,6 +30,7 @@
             grid-template-columns: 300px 1fr 300px;
             grid-template-rows: 1fr;
             height: 100vh;
+            height: 100dvh;
             max-width: 1800px;
             margin: 0 auto;
             gap: 15px;
@@ -34,6 +40,99 @@
             border-radius: 20px;
             box-shadow: 0 25px 50px rgba(0,0,0,0.15);
             overflow: hidden;
+        }
+
+        /* Custom modal for time input */
+        .time-input-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10001;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 15vh;
+        }
+
+        .time-input-modal.active {
+            display: flex;
+        }
+
+        .time-input-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 320px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.2s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .time-input-content h3 {
+            margin: 0 0 16px 0;
+            color: #2d3748;
+            font-size: 1.1rem;
+        }
+
+        .time-input-content input[type="number"] {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 18px;
+            margin-bottom: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .time-input-content input[type="number"]:focus {
+            border-color: #4299e1;
+        }
+
+        .time-input-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .time-input-buttons button {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .time-input-buttons .confirm-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .time-input-buttons .cancel-btn {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .time-input-buttons button:active {
+            transform: scale(0.98);
         }
 
         .header {
@@ -82,6 +181,7 @@
             display: flex;
             flex-direction: column;
             height: calc(100vh - 30px);
+            height: calc(100dvh - 30px);
             overflow: hidden;
         }
 
@@ -185,6 +285,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             overflow-y: auto;
             height: calc(100vh - 30px);
+            height: calc(100dvh - 30px);
             display: flex;
             flex-direction: column;
             gap: 20px;
@@ -211,6 +312,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             overflow-y: auto;
             height: calc(100vh - 30px);
+            height: calc(100dvh - 30px);
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -549,6 +651,7 @@
                 grid-template-rows: auto 1fr auto auto;
                 height: auto;
                 min-height: 100vh;
+                min-height: 100dvh;
                 gap: 10px;
                 padding: 10px;
                 overflow-y: auto;
@@ -564,6 +667,7 @@
                 order: 1;
                 min-height: 350px;
                 height: 50vh;
+                height: 50dvh;
             }
             
             .log-column {
@@ -590,6 +694,7 @@
         @media (max-width: 800px) {
             body {
                 overflow-y: auto;
+                position: relative;
             }
 
             .container {
@@ -597,6 +702,7 @@
                 grid-template-rows: auto auto auto auto;
                 height: auto;
                 min-height: 100vh;
+                min-height: 100dvh;
                 gap: 8px;
                 padding: 8px;
                 border-radius: 0;
@@ -613,8 +719,19 @@
             
             .simulation-panel {
                 order: 1;
-                min-height: 300px;
-                height: 45vh;
+                min-height: 350px;
+                height: auto;
+                max-height: 55vh;
+                max-height: 55dvh;
+                overflow: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #simulation-canvas {
+                min-height: 350px;
+                min-width: 350px;
+                flex-shrink: 0;
+                touch-action: pan-x pan-y;
             }
             
             .log-column {
@@ -711,9 +828,19 @@
             }
 
             .simulation-panel {
-                min-height: 250px;
-                height: 40vh;
+                min-height: 300px;
+                height: auto;
+                max-height: 50vh;
+                max-height: 50dvh;
                 border-radius: 12px;
+                overflow: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #simulation-canvas {
+                min-height: 300px;
+                min-width: 300px;
+                touch-action: pan-x pan-y;
             }
 
             .side-panel, .log-column {
@@ -937,16 +1064,19 @@
                 grid-template-columns: 250px 1fr 250px;
                 grid-template-rows: 1fr;
                 height: 100vh;
+                height: 100dvh;
                 overflow: hidden;
             }
 
             .side-panel, .log-column {
                 height: calc(100vh - 20px);
+                height: calc(100dvh - 20px);
                 max-height: none;
             }
 
             .simulation-panel {
                 height: calc(100vh - 20px);
+                height: calc(100dvh - 20px);
                 min-height: auto;
             }
 
@@ -1050,6 +1180,18 @@
                 </div>
             </div>
         </div>
+
+        <!-- Custom Time Input Modal -->
+        <div id="time-input-modal" class="time-input-modal">
+            <div class="time-input-content">
+                <h3 id="time-input-title">Enter time for P1 to request CS:</h3>
+                <input type="number" id="time-input-field" min="0" step="any" placeholder="Enter time value">
+                <div class="time-input-buttons">
+                    <button class="cancel-btn" id="time-input-cancel">Cancel</button>
+                    <button class="confirm-btn" id="time-input-confirm">Confirm</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1079,12 +1221,34 @@
           // Canvas setup
           const canvas = document.getElementById('simulation-canvas');
           const ctx = canvas.getContext('2d');
+          let isInputActive = false; // Track when prompt/input is active
+          let lastCanvasWidth = 0;
+          let lastCanvasHeight = 0;
+          
           function resizeCanvas() {
-            canvas.width = canvas.clientWidth;
-            canvas.height = canvas.clientHeight;
+            // Skip resize if input is active (keyboard open on mobile)
+            if (isInputActive) return;
+            
+            const newWidth = canvas.clientWidth;
+            const newHeight = canvas.clientHeight;
+            
+            // Only resize if dimensions actually changed significantly
+            // This prevents jitter from mobile keyboard
+            if (Math.abs(newWidth - lastCanvasWidth) < 5 && Math.abs(newHeight - lastCanvasHeight) < 5) {
+              return;
+            }
+            
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            lastCanvasWidth = newWidth;
+            lastCanvasHeight = newHeight;
             NODE_RADIUS = calculateNodeRadius();
           }
           window.addEventListener('resize', resizeCanvas);
+          // Also handle orientation change explicitly
+          window.addEventListener('orientationchange', () => {
+            setTimeout(resizeCanvas, 100);
+          });
           resizeCanvas();
 
           // UI elements
@@ -1134,6 +1298,65 @@
             logPanel.scrollTop = logPanel.scrollHeight;
           }
 
+          // Custom time input modal
+          const timeInputModal = document.getElementById('time-input-modal');
+          const timeInputTitle = document.getElementById('time-input-title');
+          const timeInputField = document.getElementById('time-input-field');
+          const timeInputConfirm = document.getElementById('time-input-confirm');
+          const timeInputCancel = document.getElementById('time-input-cancel');
+          let timeInputCallback = null;
+
+          function showTimeInputModal(processId, defaultValue, callback) {
+            isInputActive = true;
+            timeInputCallback = callback;
+            timeInputTitle.textContent = `Enter time for ${processId} to request CS:`;
+            timeInputField.value = defaultValue;
+            timeInputModal.classList.add('active');
+            // Focus after a small delay to ensure modal is visible
+            setTimeout(() => timeInputField.focus(), 100);
+          }
+
+          function hideTimeInputModal(confirmed) {
+            timeInputModal.classList.remove('active');
+            isInputActive = false;
+            
+            if (timeInputCallback) {
+              if (confirmed) {
+                const newTime = parseFloat(timeInputField.value);
+                if (isNaN(newTime) || newTime < 0) {
+                  log('Invalid time value. Please enter a non-negative number.', 'system');
+                  timeInputCallback(null);
+                } else {
+                  timeInputCallback(newTime);
+                }
+              } else {
+                timeInputCallback(null);
+              }
+              timeInputCallback = null;
+            }
+          }
+
+          timeInputConfirm.addEventListener('click', () => hideTimeInputModal(true));
+          timeInputCancel.addEventListener('click', () => hideTimeInputModal(false));
+          
+          // Handle Enter key in input field
+          timeInputField.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              hideTimeInputModal(true);
+            } else if (e.key === 'Escape') {
+              e.preventDefault();
+              hideTimeInputModal(false);
+            }
+          });
+
+          // Close modal when clicking outside
+          timeInputModal.addEventListener('click', (e) => {
+            if (e.target === timeInputModal) {
+              hideTimeInputModal(false);
+            }
+          });
+
           // Message class
           class Message {
             constructor(type, from, to, timestamp, processId, travelDuration) {
@@ -1177,16 +1400,15 @@
                 return;
               }
               
-              // Prompt user for time
-              const timeInput = prompt(`Enter time for ${this.id} to request CS:`, this.time.toString());
-              if (timeInput === null) return; // User cancelled
-              
-              const newTime = parseFloat(timeInput);
-              if (isNaN(newTime) || newTime < 0) {
-                alert('Please enter a valid non-negative number');
-                return;
-              }
-              
+              // Use custom modal for time input
+              const processRef = this;
+              showTimeInputModal(this.id, this.time, (newTime) => {
+                if (newTime === null) return; // User cancelled
+                processRef.executeRequestCS(newTime);
+              });
+            }
+
+            executeRequestCS(newTime) {
               this.time = newTime;
               this.state = 'requesting'; // Always start as requesting (yellow)
               this.requestTimestamp = this.time;
@@ -1595,19 +1817,41 @@
               if (Math.hypot(dx, dy) < NODE_RADIUS) {
                 // show context menu
                 contextTarget = id;
-                // Place menu near the click using viewport coordinates
-                const offset = 8; // small nudge so it doesn't sit under the cursor
-                let left = clientX + offset;
-                let top  = clientY + offset;
-                // Keep within viewport
-                const menuRect = contextMenu.getBoundingClientRect();
+                
+                // Make menu visible but off-screen to measure it
+                contextMenu.style.visibility = 'hidden';
+                contextMenu.style.display = 'block';
+                
+                const menuWidth = contextMenu.offsetWidth;
+                const menuHeight = contextMenu.offsetHeight;
                 const vw = window.innerWidth;
                 const vh = window.innerHeight;
-                if (left + menuRect.width > vw) left = Math.max(0, vw - menuRect.width - 6);
-                if (top + menuRect.height > vh) top = Math.max(0, vh - menuRect.height - 6);
+                const padding = 10; // Minimum padding from screen edges
+                
+                // Calculate position - prefer to show menu where there's more space
+                let left, top;
+                
+                // For nodes on the right side (P2, P3), show menu to the left of the tap
+                if (clientX > vw / 2) {
+                  left = clientX - menuWidth - padding;
+                } else {
+                  left = clientX + padding;
+                }
+                
+                // For nodes on the bottom, show menu above the tap
+                if (clientY > vh / 2) {
+                  top = clientY - menuHeight - padding;
+                } else {
+                  top = clientY + padding;
+                }
+                
+                // Final bounds check to ensure menu stays on screen
+                left = Math.max(padding, Math.min(left, vw - menuWidth - padding));
+                top = Math.max(padding, Math.min(top, vh - menuHeight - padding));
+                
                 contextMenu.style.left = left + 'px';
-                contextMenu.style.top  = top + 'px';
-                contextMenu.style.display = 'block';
+                contextMenu.style.top = top + 'px';
+                contextMenu.style.visibility = 'visible';
                 return true;
               }
             }
